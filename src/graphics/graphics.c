@@ -46,9 +46,6 @@ void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callba
 	
     gDPPipeSync(renderState->dl++);
     gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WD, osVirtualToPhysical(targetTask->framebuffer));
-    /* clearcolor is 32-bits (2 pixels wide) because fill mode
-     * does two pixels at a time.
-     */
     gDPSetFillColor(renderState->dl++, (GPACK_RGBA5551(255, 0, 0, 1) << 16 | 
 			       GPACK_RGBA5551(255, 0, 0, 1)));
     gDPFillRectangle(renderState->dl++, 0, 0, SCREEN_WD-1, SCREEN_HT-1);

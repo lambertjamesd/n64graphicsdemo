@@ -15,6 +15,11 @@ struct Vector3 gCameraStart = {0.0f, SCENE_SCALE * 3.0f, SCENE_SCALE * 7.0f};
 struct Vector3 gShadowCasterPos = {0.0f, SCENE_SCALE * 2.0f, 0.0f};
 float gCameraDistance = 0.0f;
 
+struct ShadowReceiver gRecieviers[] = {
+    {ground_mat, ground_in_shadow_mat, ground_model_gfx},
+    {ground_mat, ground_in_shadow_mat, subject_model_gfx},
+};
+
 #define ROTATE_PER_SECOND       (M_PI * 0.25f)
 
 void sceneInit(struct Scene* scene) {
@@ -25,11 +30,15 @@ void sceneInit(struct Scene* scene) {
     vector3Sub(&gCameraFocus, &gCameraStart, &offset);
     quatLook(&offset, &gUp, &scene->camera.transform.rotation);
     gCameraDistance = sqrtf(vector3DistSqrd(&gCameraFocus, &gCameraStart));
+
+    shadowRendererInit(&scene->shadowRenderer, cube_shadow_model_gfx, CUBE_SHADOW_SHADOWTOP_BONE, CUBE_SHADOW_SHADOWBOTTOM_BONE, SCENE_SCALE * 4.0f);
+    scene->shadowRenderer.casterTransform.position = gShadowCasterPos;
+    vector3Scale(&gUp, &scene->shadowRenderer.lightPosition, SCENE_SCALE * 6.0f);
 }
 
 void sceneRender(struct Scene* scene, struct RenderState* renderState) {
-    cameraSetupMatrices(&scene->camera, renderState, (float)SCREEN_WD / (float)SCREEN_HT);
 
+    cameraSetupMatrices(&scene->camera, renderState, (float)SCREEN_WD / (float)SCREEN_HT);
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
 
     Mtx* shadowMatrices = renderStateRequestMatrices(renderState, CUBE_SHADOW_DEFAULT_BONES_COUNT);
@@ -37,9 +46,11 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     guTranslate(&shadowMatrices[CUBE_SHADOW_SHADOWTOP_BONE], gShadowCasterPos.x, gShadowCasterPos.y, gShadowCasterPos.z);
     guTranslate(&shadowMatrices[CUBE_SHADOW_SHADOWBOTTOM_BONE], 0.0f, -gShadowCasterPos.y, 0.0f);
 
-    Mtx* subjectMatrix = renderStateRequestMatrices(renderState, 1);
+    Mtx* subjectMatrices = renderStateRequestMatrices(renderState, 2);
+    guMtxIdent(&subjectMatrices[0]);
+    
     guPosition(
-        subjectMatrix, 
+        &subjectMatrices[1], 
         gTimePassed * 50.0f, gTimePassed * 30.0f, 0.0f, 
         0.5f, 
         gCameraFocus.x + SCENE_SCALE * 1.5f * cosf(gTimePassed), 
@@ -47,49 +58,22 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
         gCameraFocus.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.33f)
     );
 
-    gSPMatrix(renderState->dl++, &shadowMatrices[CUBE_SHADOW_SHADOWTOP_BONE], G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
+    Mtx* casterMatrix = renderStateRequestMatrices(renderState, 1);
+
+    guTranslate(casterMatrix, gShadowCasterPos.x, gShadowCasterPos.y, gShadowCasterPos.z);
+
+    gSPMatrix(renderState->dl++, casterMatrix, G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
     gSPDisplayList(renderState->dl++, shadow_caster_mat);
     gSPDisplayList(renderState->dl++, shadow_caster_model_gfx);
     gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
 
-    gSPDisplayList(renderState->dl++, ground_mat);
-    gSPDisplayList(renderState->dl++, ground_model_gfx);
-
-    gSPMatrix(renderState->dl++, subjectMatrix, G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
-    gSPDisplayList(renderState->dl++, subject_model_gfx);
-    gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
-
-    gDPPipeSync(renderState->dl++);
-    gDPSetRenderMode(renderState->dl++, G_RM_ZB_XLU_SURF | Z_UPD, G_RM_ZB_XLU_SURF2 | Z_UPD);
-
-    gSPGeometryMode(renderState->dl++, G_CULL_BACK, G_CULL_FRONT);
-    gSPSegment(renderState->dl++, MATRIX_TRANSFORM_SEGMENT, shadowMatrices);
-    gSPDisplayList(renderState->dl++, shadow_mat);
-    gSPDisplayList(renderState->dl++, cube_shadow_model_gfx);
-
-    gDPPipeSync(renderState->dl++);
-    gSPGeometryMode(renderState->dl++, G_CULL_FRONT, G_CULL_BACK);
-    gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_DECAL, G_RM_ZB_OPA_DECAL2);
-
-    gSPDisplayList(renderState->dl++, ground_in_shadow_mat);
-    gSPDisplayList(renderState->dl++, ground_model_gfx);
-    gSPMatrix(renderState->dl++, subjectMatrix, G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
-    gSPDisplayList(renderState->dl++, subject_model_gfx);
-    gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
-
-    gDPPipeSync(renderState->dl++);
-    gDPSetRenderMode(renderState->dl++, G_RM_ZB_XLU_SURF | Z_UPD, G_RM_ZB_XLU_SURF2 | Z_UPD);
-    gSPSegment(renderState->dl++, MATRIX_TRANSFORM_SEGMENT, shadowMatrices);
-    gSPDisplayList(renderState->dl++, shadow_mat);
-    gSPDisplayList(renderState->dl++, cube_shadow_model_gfx);
-
-    gDPPipeSync(renderState->dl++);
-    gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_DECAL, G_RM_ZB_OPA_DECAL2);
-    gSPDisplayList(renderState->dl++, ground_mat);
-    gSPDisplayList(renderState->dl++, ground_model_gfx);
-    gSPMatrix(renderState->dl++, subjectMatrix, G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
-    gSPDisplayList(renderState->dl++, subject_model_gfx);
-    gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
+    shadowRendererRender(
+        &scene->shadowRenderer,
+        renderState,
+        gRecieviers,
+        subjectMatrices,
+        sizeof(gRecieviers) / sizeof(*gRecieviers)
+    );
 }
 
 void sceneUpdate(struct Scene* scene) {

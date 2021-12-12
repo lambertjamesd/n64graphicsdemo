@@ -7,6 +7,11 @@
 #include "util/rom.h"
 #include "scene/scene.h"
 #include "util/time.h"
+#include "string.h"
+
+#ifdef WITH_DEBUGGER
+#include "../debugger/debugger.h"
+#endif
 
 static OSThread gameThread;
 static OSThread initThread;
@@ -74,6 +79,8 @@ static void initProc(void* arg) {
 
 static struct Scene gScene;
 
+extern OSMesgQueue dmaMessageQ;
+
 static void gameProc(void* arg) {
     u8 schedulerMode = OS_VI_NTSC_HPF1;
 
@@ -111,9 +118,14 @@ static void gameProc(void* arg) {
     u32 drawBufferIndex = 0;
 
     graphicsLayoutScreenBuffers((u16*)PHYS_TO_K0(osMemSize));
-    romInit();
 
     sceneInit(&gScene);
+    romInit();
+#ifdef WITH_DEBUGGER
+    OSThread* debugThreads[2];
+    debugThreads[0] = &gameThread;
+    gdbInitDebugger(gPiHandle, &dmaMessageQ, debugThreads, 1);
+#endif
 
     while (1) {
         OSScMsg *msg = NULL;
@@ -129,6 +141,15 @@ static void gameProc(void* arg) {
 
                 sceneUpdate(&gScene);
                 timeUpdateDelta();
+
+                char msg[64];
+                sprintf(msg, "current=%x start=%x end=%x dpstat=%x spstat=%x\n",
+                    IO_READ(DPC_CURRENT_REG),					
+                    IO_READ(DPC_START_REG),						
+                    IO_READ(DPC_END_REG),						
+                    IO_READ(DPC_STATUS_REG),					
+                    IO_READ(SP_STATUS_REG));
+
 
                 break;
 

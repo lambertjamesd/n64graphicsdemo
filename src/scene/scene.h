@@ -3,9 +3,11 @@
 
 #include "camera.h"
 #include "graphics/renderstate.h"
+#include "shadow_renderer.h"
 
 struct Scene {
     struct Camera camera;
+    struct ShadowRenderer shadowRenderer;
 };
 
 void sceneInit(struct Scene* scene);
