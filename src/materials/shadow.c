@@ -5,7 +5,8 @@
 
 Gfx shadow_mat[] = {
     gsDPPipeSync(),
+    gsSPClearGeometryMode(G_LIGHTING),
     gsDPSetCombineMode(SHADOW_COMBINE_MODE, SHADOW_COMBINE_MODE),
-    gsDPSetPrimColor(255, 255, 128, 128, 128, 128),
+    gsDPSetPrimColor(255, 255, 128, 128, 128, 0),
     gsSPEndDisplayList(),
 };

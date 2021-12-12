@@ -7,3 +7,4 @@
 #include "cube_shadow_animdef.inc.h"
 #include "cube_shadow_anim.inc.h"
 #include "ground_geo.inc.h"
+#include "subject_geo.inc.h"
