@@ -7,20 +7,27 @@
 #include "materials/shadow_caster.h"
 #include "materials/shadow.h"
 #include "materials/ground.h"
+#include "materials/subject.h"
 #include "util/time.h"
 #include "sk64/skelatool_defs.h"
 
 struct Vector3 gCameraFocus = {0.0f, SCENE_SCALE, 0.0f};
 struct Vector3 gCameraStart = {0.0f, SCENE_SCALE * 3.0f, SCENE_SCALE * 7.0f};
 struct Vector3 gShadowCasterPos = {0.0f, SCENE_SCALE * 2.0f, 0.0f};
+struct Vector3 gLightPosition = {0.0f, SCENE_SCALE * 6.0f, 0.0f};
 float gCameraDistance = 0.0f;
 
 struct ShadowReceiver gRecieviers[] = {
-    {ground_mat, ground_in_shadow_mat, ground_model_gfx},
-    {ground_mat, ground_in_shadow_mat, subject_model_gfx},
+    {subject_mat, subject_mat, subject_model_gfx, ShadowReceiverFlagsUseLight},
 };
 
 #define ROTATE_PER_SECOND       (M_PI * 0.25f)
+
+Lights2 static_light = gdSPDefLights2(
+    32, 32, 32, 
+    0, 0, 0, 0, 0x7f, 0,
+    2, 16, 32, 0, 0x81, 0
+);
 
 void sceneInit(struct Scene* scene) {
     cameraInit(&scene->camera, 45.0f, 50.0f, 5000.0f);
@@ -33,7 +40,8 @@ void sceneInit(struct Scene* scene) {
 
     shadowRendererInit(&scene->shadowRenderer, cube_shadow_model_gfx, CUBE_SHADOW_SHADOWTOP_BONE, CUBE_SHADOW_SHADOWBOTTOM_BONE, SCENE_SCALE * 4.0f);
     scene->shadowRenderer.casterTransform.position = gShadowCasterPos;
-    vector3Scale(&gUp, &scene->shadowRenderer.lightPosition, SCENE_SCALE * 6.0f);
+
+    pointLightInit(&scene->lightSource, &gLightPosition, &gColorWhite, 1.0f);
 }
 
 void sceneRender(struct Scene* scene, struct RenderState* renderState) {
@@ -41,27 +49,31 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     cameraSetupMatrices(&scene->camera, renderState, (float)SCREEN_WD / (float)SCREEN_HT);
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
 
-    Mtx* shadowMatrices = renderStateRequestMatrices(renderState, CUBE_SHADOW_DEFAULT_BONES_COUNT);
+    gSPDisplayList(renderState->dl++, ground_mat);
+    gSPDisplayList(renderState->dl++, ground_model_gfx);
 
-    guTranslate(&shadowMatrices[CUBE_SHADOW_SHADOWTOP_BONE], gShadowCasterPos.x, gShadowCasterPos.y, gShadowCasterPos.z);
-    guTranslate(&shadowMatrices[CUBE_SHADOW_SHADOWBOTTOM_BONE], 0.0f, -gShadowCasterPos.y, 0.0f);
+    struct Vector3 angles;
+    angles.x = gTimePassed * (M_PI * 50.0f / 180.0f);
+    angles.y = gTimePassed * (M_PI * 30.0f / 180.0f);
+    angles.z = 0.0f;
+    vector3Scale(&gOneVec, &gRecieviers[0].transform.scale, 0.5f);
+    gRecieviers[0].transform.position.x = gCameraFocus.x + SCENE_SCALE * 1.5f * cosf(gTimePassed);
+    gRecieviers[0].transform.position.y = gCameraFocus.y;
+    gRecieviers[0].transform.position.z = gCameraFocus.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.33f);
+    quatEulerAngles(&angles, &gRecieviers[0].transform.rotation);
 
-    Mtx* subjectMatrices = renderStateRequestMatrices(renderState, 2);
-    guMtxIdent(&subjectMatrices[0]);
-    
-    guPosition(
-        &subjectMatrices[1], 
-        gTimePassed * 50.0f, gTimePassed * 30.0f, 0.0f, 
-        0.5f, 
-        gCameraFocus.x + SCENE_SCALE * 1.5f * cosf(gTimePassed), 
-        gCameraFocus.y, 
-        gCameraFocus.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.33f)
-    );
+    scene->lightSource.position.x = gLightPosition.x + SCENE_SCALE * 1.5f * cosf(gTimePassed);
+    scene->lightSource.position.z = gLightPosition.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 2.0f);
 
     Mtx* casterMatrix = renderStateRequestMatrices(renderState, 1);
 
     guTranslate(casterMatrix, gShadowCasterPos.x, gShadowCasterPos.y, gShadowCasterPos.z);
 
+    gSPSetLights2(renderState->dl++, static_light);
+
+    Light* pointLightSource = renderStateRequestLights(renderState, 1);
+    pointLightCalculateLight(&scene->lightSource, &gShadowCasterPos, pointLightSource);
+    gSPLight(renderState->dl++, pointLightSource, 1);
     gSPMatrix(renderState->dl++, casterMatrix, G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
     gSPDisplayList(renderState->dl++, shadow_caster_mat);
     gSPDisplayList(renderState->dl++, shadow_caster_model_gfx);
@@ -70,8 +82,8 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     shadowRendererRender(
         &scene->shadowRenderer,
         renderState,
+        &scene->lightSource,
         gRecieviers,
-        subjectMatrices,
         sizeof(gRecieviers) / sizeof(*gRecieviers)
     );
 }

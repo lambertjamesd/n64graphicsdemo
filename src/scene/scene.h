@@ -4,10 +4,12 @@
 #include "camera.h"
 #include "graphics/renderstate.h"
 #include "shadow_renderer.h"
+#include "point_light.h"
 
 struct Scene {
     struct Camera camera;
     struct ShadowRenderer shadowRenderer;
+    struct PointLight lightSource;
 };
 
 void sceneInit(struct Scene* scene);

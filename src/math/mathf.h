@@ -26,6 +26,8 @@ float ceilf(float in);
 float minf(float a, float b);
 float maxf(float a, float b);
 
+char floatTos8norm(float input);
+
 #define isnan(a) ((a) != (a))
 
 #endif

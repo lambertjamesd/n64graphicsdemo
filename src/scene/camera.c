@@ -9,21 +9,21 @@ void cameraInit(struct Camera* camera, float fov, float near, float far) {
     camera->farPlane = far;
 }
 
-void cameraBuildViewMatrix(struct Camera* camera, Mtx* matrix) {
+void cameraBuildViewMatrix(struct Camera* camera, float matrix[4][4]) {
     struct Transform cameraTransCopy = camera->transform;
     struct Transform inverse;
     transformInvert(&cameraTransCopy, &inverse);
-    transformToMatrixL(&inverse, matrix);
+    transformToMatrix(&inverse, matrix);
 }
 
-void cameraBuildProjectionMatrix(struct Camera* camera, Mtx* matrix, u16* perspectiveNormalize, float aspectRatio) {
+void cameraBuildProjectionMatrix(struct Camera* camera, float matrix[4][4], u16* perspectiveNormalize, float aspectRatio) {
     float planeScalar = 1.0f;
 
     if (camera->transform.position.y > camera->farPlane * 0.5f) {
         planeScalar = 2.0f * camera->transform.position.y / camera->farPlane;
     }
 
-    guPerspective(matrix, perspectiveNormalize, camera->fov, aspectRatio, camera->nearPlane * planeScalar, camera->farPlane * planeScalar, 1.0f);
+    guPerspectiveF(matrix, perspectiveNormalize, camera->fov, aspectRatio, camera->nearPlane * planeScalar, camera->farPlane * planeScalar, 1.0f);
 }
 
 void cameraSetupMatrices(struct Camera* camera, struct RenderState* renderState, float aspectRatio) {
@@ -33,11 +33,19 @@ void cameraSetupMatrices(struct Camera* camera, struct RenderState* renderState,
         return;
     }
 
-    cameraBuildViewMatrix(camera, &viewProjMatrix[0]);
+    guMtxIdent(&viewProjMatrix[0]);
     gSPMatrix(renderState->dl++, osVirtualToPhysical(&viewProjMatrix[0]), G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
 
+    float view[4][4];
+    float persp[4][4];
+    float combined[4][4];
+
+    cameraBuildViewMatrix(camera, view);
     u16 perspectiveNormalize;
-    cameraBuildProjectionMatrix(camera, &viewProjMatrix[1], &perspectiveNormalize, aspectRatio);
+    cameraBuildProjectionMatrix(camera, persp, &perspectiveNormalize, aspectRatio);
+    guMtxCatF(view, persp, combined);
+    guMtxF2L(combined, &viewProjMatrix[1]);
+
     gSPMatrix(renderState->dl++, osVirtualToPhysical(&viewProjMatrix[1]), G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
     gSPPerspNormalize(renderState->dl++, perspectiveNormalize);
 }

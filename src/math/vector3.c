@@ -114,3 +114,9 @@ int vector3MoveTowards(struct Vector3* from, struct Vector3* towards, float maxD
         return 0;
     }
 }
+
+void vector3ToVector3u8(struct Vector3* input, struct Vector3u8* output) {
+    output->x = floatTos8norm(input->x);
+    output->y = floatTos8norm(input->y);
+    output->z = floatTos8norm(input->z);
+}

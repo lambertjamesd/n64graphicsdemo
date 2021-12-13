@@ -3,21 +3,53 @@
 #include "materials/shadow.h"
 #include "sk64/skelatool_defs.h"
 
-void shadowRendererInit(struct ShadowRenderer* shadowRenderer, Gfx* gfx, unsigned casterBoneIndex, unsigned bottomShadowIndex, float shadowLength) {
-    shadowRenderer->gfx = gfx;
+void shadowRendererInit(struct ShadowRenderer* shadowRenderer, Gfx* shape, unsigned casterBoneIndex, unsigned bottomShadowIndex, float shadowLength) {
+    shadowRenderer->shape = shape;
     shadowRenderer->casterBoneIndex = casterBoneIndex;
     shadowRenderer->bottomShadowIndex = bottomShadowIndex;
     shadowRenderer->shadowLength = shadowLength;
-    shadowRenderer->lightPosition = gUp;
     transformInitIdentity(&shadowRenderer->casterTransform);
 }
 
-void shadowRendererRender(struct ShadowRenderer* shadowRenderer, struct RenderState* renderState, struct ShadowReceiver* recievers, Mtx* recieverMatrices, unsigned recieverCount) {
+void shadowRendererRender(
+    struct ShadowRenderer* shadowRenderer, 
+    struct RenderState* renderState,
+    struct PointLight* fromLight, 
+    struct ShadowReceiver* recievers, 
+    unsigned recieverCount
+) {
+    Mtx* recieverMatrices = renderStateRequestMatrices(renderState, recieverCount);
+    unsigned lightCount = 0;
+
+    for (unsigned i = 0; i < recieverCount; ++i) {
+        struct ShadowReceiver* reciever = &recievers[i];
+        transformToMatrixL(&reciever->transform, &recieverMatrices[i]);
+
+        if (reciever->flags & ShadowReceiverFlagsUseLight) {
+            ++lightCount;
+        }
+    }
+    
+    Light* lights = renderStateRequestLights(renderState, lightCount);
+    
+    unsigned currentLight = 0;
+
     // first pass for shadowed objects
     for (unsigned i = 0; i < recieverCount; ++i) {
+        struct ShadowReceiver* reciever = &recievers[i];
+
         gSPMatrix(renderState->dl++, &recieverMatrices[i], G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
-        gSPDisplayList(renderState->dl++, recievers[i].litMaterial);
-        gSPDisplayList(renderState->dl++, recievers[i].geometry);
+        gSPDisplayList(renderState->dl++, reciever->litMaterial);
+
+        if (reciever->flags & ShadowReceiverFlagsUseLight) {
+            Light* currLight = &lights[currentLight];
+            pointLightCalculateLight(fromLight, &reciever->transform.position, currLight);
+            gSPLight(renderState->dl++, currLight, 1);
+
+            ++currentLight;
+        }
+
+        gSPDisplayList(renderState->dl++, reciever->geometry);
         gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
     }
 
@@ -26,7 +58,7 @@ void shadowRendererRender(struct ShadowRenderer* shadowRenderer, struct RenderSt
     transformToMatrixL(&shadowRenderer->casterTransform, &shadowMatrices[shadowRenderer->casterBoneIndex]);
 
     struct Vector3 lightOffset;
-    vector3Sub(&shadowRenderer->casterTransform.position, &shadowRenderer->lightPosition, &lightOffset);
+    vector3Sub(&shadowRenderer->casterTransform.position, &fromLight->position, &lightOffset);
 
     float lightDistance = sqrtf(vector3MagSqrd(&lightOffset));
 
@@ -54,7 +86,7 @@ void shadowRendererRender(struct ShadowRenderer* shadowRenderer, struct RenderSt
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_XLU_SURF | Z_UPD, G_RM_ZB_XLU_SURF2 | Z_UPD);
     gSPSegment(renderState->dl++, MATRIX_TRANSFORM_SEGMENT, shadowMatrices);
     gSPDisplayList(renderState->dl++, shadow_mat);
-    gSPDisplayList(renderState->dl++, shadowRenderer->gfx);
+    gSPDisplayList(renderState->dl++, shadowRenderer->shape);
 
 
     gDPPipeSync(renderState->dl++);
@@ -65,9 +97,16 @@ void shadowRendererRender(struct ShadowRenderer* shadowRenderer, struct RenderSt
     }
     // second pass for shadowed objects
     for (unsigned i = 0; i < recieverCount; ++i) {
+        struct ShadowReceiver* reciever = &recievers[i];
+
         gSPMatrix(renderState->dl++, &recieverMatrices[i], G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
-        gSPDisplayList(renderState->dl++, recievers[i].shadowMaterial);
-        gSPDisplayList(renderState->dl++, recievers[i].geometry);
+        gSPDisplayList(renderState->dl++, reciever->shadowMaterial);
+
+        if (reciever->flags & ShadowReceiverFlagsUseLight) {
+            gSPLight(renderState->dl++, &gLightBlack, 1);
+        }
+
+        gSPDisplayList(renderState->dl++, reciever->geometry);
         gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
     }
 
@@ -80,19 +119,28 @@ void shadowRendererRender(struct ShadowRenderer* shadowRenderer, struct RenderSt
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_XLU_SURF | Z_UPD, G_RM_ZB_XLU_SURF2 | Z_UPD);
     gSPSegment(renderState->dl++, MATRIX_TRANSFORM_SEGMENT, shadowMatrices);
     gSPDisplayList(renderState->dl++, shadow_mat);
-    gSPDisplayList(renderState->dl++, shadowRenderer->gfx);
-
+    gSPDisplayList(renderState->dl++, shadowRenderer->shape);
 
     gDPPipeSync(renderState->dl++);
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_DECAL, G_RM_ZB_OPA_DECAL2);
     if (lightVerticalOffset > 0.0f) {
         gSPGeometryMode(renderState->dl++, G_CULL_FRONT, G_CULL_BACK);
     }
+
     // third pass for shadowed objects
+    currentLight = 0;
     for (unsigned i = 0; i < recieverCount; ++i) {
+        struct ShadowReceiver* reciever = &recievers[i];
+
         gSPMatrix(renderState->dl++, &recieverMatrices[i], G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
-        gSPDisplayList(renderState->dl++, recievers[i].litMaterial);
-        gSPDisplayList(renderState->dl++, recievers[i].geometry);
+        gSPDisplayList(renderState->dl++, reciever->litMaterial);
+
+        if (reciever->flags & ShadowReceiverFlagsUseLight) {
+            gSPLight(renderState->dl++, &lights[currentLight], 1);
+            ++currentLight;
+        }
+
+        gSPDisplayList(renderState->dl++, reciever->geometry);
         gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
     }
 }

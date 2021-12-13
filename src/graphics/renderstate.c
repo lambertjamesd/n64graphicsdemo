@@ -3,6 +3,7 @@
 void renderStateInit(struct RenderState* renderState) {
     renderState->dl = renderState->glist;
     renderState->currentMatrix = 0;
+    renderState->currentLight = 0;
     renderState->currentChunkEnd = MAX_DL_LENGTH;
 }
 
@@ -16,9 +17,18 @@ Mtx* renderStateRequestMatrices(struct RenderState* renderState, unsigned count)
     return 0;
 }
 
+Light* renderStateRequestLights(struct RenderState* renderState, unsigned count) {
+    if (renderState->currentLight + count <= MAX_ACTIVE_TRANSFORMS) {
+        Light* result = &renderState->lights[renderState->currentLight];
+        renderState->currentLight += count;
+        return result;
+    }
+
+    return 0;
+}
+
 void renderStateFlushCache(struct RenderState* renderState) {
-    osWritebackDCache(renderState->glist, sizeof(renderState->glist));
-    osWritebackDCache(renderState->matrices, sizeof(Mtx) * renderState->currentMatrix);
+    osWritebackDCache(renderState, sizeof(struct RenderState));
 }
 
 Gfx* renderStateAllocateDLChunk(struct RenderState* renderState, unsigned count) {

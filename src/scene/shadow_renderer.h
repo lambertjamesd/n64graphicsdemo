@@ -5,28 +5,36 @@
 
 #include "graphics/renderstate.h"
 #include "math/transform.h"
+#include "graphics/color.h"
+#include "point_light.h"
+
+enum ShadowReceiverFlags {
+    ShadowReceiverFlagsUseLight = (1 << 0),
+};
 
 struct ShadowReceiver {
     Gfx* litMaterial;
     Gfx* shadowMaterial;
     Gfx* geometry;
+    unsigned short flags;
+    struct Transform transform;
 };
 
 struct ShadowRenderer {
-    Gfx* gfx;
+    Gfx* shape;
     struct Transform casterTransform;
-    struct Vector3 lightPosition;
     float shadowLength;
     unsigned char casterBoneIndex;
     unsigned char bottomShadowIndex;
+
 };
 
-void shadowRendererInit(struct ShadowRenderer* shadowRenderer, Gfx* gfx, unsigned casterBoneIndex, unsigned bottomShadowIndex, float shadowLength);
+void shadowRendererInit(struct ShadowRenderer* shadowRenderer, Gfx* shape, unsigned casterBoneIndex, unsigned bottomShadowIndex, float shadowLength);
 void shadowRendererRender(
     struct ShadowRenderer* shadowRenderer, 
     struct RenderState* renderState, 
+    struct PointLight* fromLight,
     struct ShadowReceiver* recievers, 
-    Mtx* recieverMatrices,
     unsigned recieverCount
 );
 

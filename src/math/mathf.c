@@ -99,3 +99,15 @@ float minf(float a, float b) {
 float maxf(float a, float b) {
     return a > b ? a : b;
 }
+
+char floatTos8norm(float input) {
+    int result = (int)(input * 127.0f);
+
+    if (result > 127) {
+        return 127;
+    } else if (result < -127) {
+        return -127;
+    } else {
+        return (char)result;
+    }
+}
