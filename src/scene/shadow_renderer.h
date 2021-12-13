@@ -5,6 +5,7 @@
 
 #include "graphics/renderstate.h"
 #include "math/transform.h"
+#include "math/vector2.h"
 #include "graphics/color.h"
 #include "point_light.h"
 
@@ -22,14 +23,12 @@ struct ShadowReceiver {
 
 struct ShadowRenderer {
     Gfx* shape;
+    Vtx* vertices;
     struct Transform casterTransform;
     float shadowLength;
-    unsigned char casterBoneIndex;
-    unsigned char bottomShadowIndex;
-
 };
 
-void shadowRendererInit(struct ShadowRenderer* shadowRenderer, Gfx* shape, unsigned casterBoneIndex, unsigned bottomShadowIndex, float shadowLength);
+void shadowRendererInit(struct ShadowRenderer* shadowRenderer, struct Vector2* outline, unsigned pointCount, float shadowLength);
 void shadowRendererRender(
     struct ShadowRenderer* shadowRenderer, 
     struct RenderState* renderState, 

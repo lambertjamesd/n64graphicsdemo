@@ -7,6 +7,7 @@
 #include "util/rom.h"
 #include "scene/scene.h"
 #include "util/time.h"
+#include "util/memory.h"
 #include "string.h"
 
 #ifdef WITH_DEBUGGER
@@ -81,6 +82,8 @@ static struct Scene gScene;
 
 extern OSMesgQueue dmaMessageQ;
 
+extern char _heapStart[];
+
 static void gameProc(void* arg) {
     u8 schedulerMode = OS_VI_NTSC_HPF1;
 
@@ -117,7 +120,9 @@ static void gameProc(void* arg) {
     u32 pendingGFX = 0;
     u32 drawBufferIndex = 0;
 
-    graphicsLayoutScreenBuffers((u16*)PHYS_TO_K0(osMemSize));
+    u16* memoryEnd = graphicsLayoutScreenBuffers((u16*)PHYS_TO_K0(osMemSize));
+
+    heapInit(_heapStart, memoryEnd);
 
     sceneInit(&gScene);
     romInit();

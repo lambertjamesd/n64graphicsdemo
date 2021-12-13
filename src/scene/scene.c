@@ -5,7 +5,6 @@
 #include "graphics/graphics.h"
 #include "models/models.h"
 #include "materials/shadow_caster.h"
-#include "materials/shadow.h"
 #include "materials/ground.h"
 #include "materials/subject.h"
 #include "util/time.h"
@@ -19,6 +18,13 @@ float gCameraDistance = 0.0f;
 
 struct ShadowReceiver gRecieviers[] = {
     {subject_mat, subject_mat, subject_model_gfx, ShadowReceiverFlagsUseLight},
+};
+
+struct Vector2 gSquareShadow[] = {
+    {SCENE_SCALE, SCENE_SCALE},
+    {SCENE_SCALE, -SCENE_SCALE},
+    {-SCENE_SCALE, -SCENE_SCALE},
+    {-SCENE_SCALE, SCENE_SCALE},
 };
 
 #define ROTATE_PER_SECOND       (M_PI * 0.25f)
@@ -38,7 +44,7 @@ void sceneInit(struct Scene* scene) {
     quatLook(&offset, &gUp, &scene->camera.transform.rotation);
     gCameraDistance = sqrtf(vector3DistSqrd(&gCameraFocus, &gCameraStart));
 
-    shadowRendererInit(&scene->shadowRenderer, cube_shadow_model_gfx, CUBE_SHADOW_SHADOWTOP_BONE, CUBE_SHADOW_SHADOWBOTTOM_BONE, SCENE_SCALE * 4.0f);
+    shadowRendererInit(&scene->shadowRenderer, gSquareShadow, sizeof(gSquareShadow)/sizeof(*gSquareShadow), SCENE_SCALE * 4.0f);
     scene->shadowRenderer.casterTransform.position = gShadowCasterPos;
 
     pointLightInit(&scene->lightSource, &gLightPosition, &gColorWhite, 1.0f);
@@ -63,6 +69,7 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     quatEulerAngles(&angles, &gRecieviers[0].transform.rotation);
 
     scene->lightSource.position.x = gLightPosition.x + SCENE_SCALE * 1.5f * cosf(gTimePassed);
+    scene->lightSource.position.y = gLightPosition.y + SCENE_SCALE * 0.25f * cosf(gTimePassed * 0.5f);
     scene->lightSource.position.z = gLightPosition.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 2.0f);
 
     Mtx* casterMatrix = renderStateRequestMatrices(renderState, 1);

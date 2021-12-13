@@ -1,14 +1,105 @@
 
 #include "shadow_renderer.h"
-#include "materials/shadow.h"
-#include "sk64/skelatool_defs.h"
+#include "util/memory.h"
+#include "defs.h"
 
-void shadowRendererInit(struct ShadowRenderer* shadowRenderer, Gfx* shape, unsigned casterBoneIndex, unsigned bottomShadowIndex, float shadowLength) {
-    shadowRenderer->shape = shape;
-    shadowRenderer->casterBoneIndex = casterBoneIndex;
-    shadowRenderer->bottomShadowIndex = bottomShadowIndex;
+#define MATRIX_TRANSFORM_SEGMENT    0xC
+#define TOP_MATRIX_INDEX        0
+#define BOTTOM_MATRIX_INDEX     1
+
+#define SHADOW_COMBINE_MODE     0, 0, 0, PRIMITIVE, 0, 0, 0, PRIMITIVE
+
+Gfx shadow_mat[] = {
+    gsDPPipeSync(),
+    gsSPClearGeometryMode(G_LIGHTING),
+    gsDPSetCombineMode(SHADOW_COMBINE_MODE, SHADOW_COMBINE_MODE),
+    gsDPSetPrimColor(255, 255, 128, 128, 128, 0),
+    gsSPEndDisplayList(),
+};
+
+void shadowRendererNewGfxFromOutline(struct Vector2* outline, unsigned pointCount, Gfx** gfxOut, Vtx** vtxOut) {
+    Vtx* vtxResult = malloc(sizeof(Vtx) * pointCount * 2);
+    Gfx* gfxResult = malloc(sizeof(Gfx) * (7 + pointCount + (pointCount - 1) / 2));
+
+    for (unsigned i = 0; i < pointCount; ++i) {
+        vtxResult[i].v.ob[0] = (short)outline[i].x;
+        vtxResult[i].v.ob[1] = 0.0f;
+        vtxResult[i].v.ob[2] = (short)outline[i].y;
+
+        vtxResult[i + pointCount].v.ob[0] = (short)(SCENE_SCALE * outline[i].x);
+        vtxResult[i + pointCount].v.ob[1] = 0.0f;
+        vtxResult[i + pointCount].v.ob[2] = (short)(SCENE_SCALE * outline[i].y);
+    }
+
+    Gfx* gfxCurrent = gfxResult;
+
+    gSPMatrix(gfxCurrent++, (Mtx*)(MATRIX_TRANSFORM_SEGMENT << 24) + TOP_MATRIX_INDEX, G_MTX_MODELVIEW | G_MTX_PUSH | G_MTX_MUL);
+    gSPVertex(gfxCurrent++, vtxResult, pointCount, 0);
+    gSPPopMatrix(gfxCurrent++, G_MTX_MODELVIEW);
+    
+    gSPMatrix(gfxCurrent++, (Mtx*)(MATRIX_TRANSFORM_SEGMENT << 24) + BOTTOM_MATRIX_INDEX, G_MTX_MODELVIEW | G_MTX_PUSH | G_MTX_MUL);
+    gSPVertex(gfxCurrent++, vtxResult, pointCount, pointCount);
+    gSPPopMatrix(gfxCurrent++, G_MTX_MODELVIEW);
+
+    for (unsigned i = 0; i < pointCount; ++i) {
+        unsigned curr = i;
+        unsigned next = (i + 1) % pointCount;
+        unsigned bottomCurr = i + pointCount;
+        unsigned bottomNext = next + pointCount;
+        gSP2Triangles(
+            gfxCurrent++, 
+            next, 
+            curr, 
+            bottomNext, 
+            0, 
+            bottomCurr, 
+            bottomNext, 
+            curr, 
+            0
+        );
+    }
+
+    for (unsigned i = 1; i + 1 < pointCount; i += 2) {
+        if (i + 2 < pointCount) {
+            gSP2Triangles(
+                gfxCurrent++, 
+                pointCount, 
+                pointCount + i, 
+                pointCount + i + 1,
+                0,
+                pointCount,
+                pointCount + i + 1,
+                pointCount + i + 2,
+                0
+            );
+        } else {
+            gSP1Triangle(
+                gfxCurrent++,
+                pointCount,
+                pointCount + 1,
+                pointCount + i + 1,
+                0
+            );
+        }
+    }
+
+    gSPEndDisplayList(gfxCurrent++);
+
+    *gfxOut = gfxResult;
+    if (vtxOut) {
+        *vtxOut = vtxResult;
+    }
+}
+
+void shadowRendererInit(struct ShadowRenderer* shadowRenderer, struct Vector2* outline, unsigned pointCount, float shadowLength) {
     shadowRenderer->shadowLength = shadowLength;
     transformInitIdentity(&shadowRenderer->casterTransform);
+    shadowRendererNewGfxFromOutline(
+        outline, 
+        pointCount, 
+        &shadowRenderer->shape, 
+        &shadowRenderer->vertices
+    );
 }
 
 void shadowRendererRender(
@@ -55,7 +146,7 @@ void shadowRendererRender(
 
     // calculate position of top and bottom of shadow
     Mtx* shadowMatrices = renderStateRequestMatrices(renderState, 2);
-    transformToMatrixL(&shadowRenderer->casterTransform, &shadowMatrices[shadowRenderer->casterBoneIndex]);
+    transformToMatrixL(&shadowRenderer->casterTransform, &shadowMatrices[TOP_MATRIX_INDEX]);
 
     struct Vector3 lightOffset;
     vector3Sub(&shadowRenderer->casterTransform.position, &fromLight->position, &lightOffset);
@@ -75,7 +166,7 @@ void shadowRendererRender(
         &shadowEnd.position
     );
     vector3Scale(&gOneVec, &shadowEnd.scale, (lightDistance + shadowRenderer->shadowLength) / lightDistance);
-    transformToMatrixL(&shadowEnd, &shadowMatrices[shadowRenderer->bottomShadowIndex]);
+    transformToMatrixL(&shadowEnd, &shadowMatrices[BOTTOM_MATRIX_INDEX]);
 
     // render back of shadows
     gDPPipeSync(renderState->dl++);

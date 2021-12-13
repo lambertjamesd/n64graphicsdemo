@@ -77,9 +77,6 @@ build/%.o: %.s
 src/models/shadow_caster.h src/models/shadow_caster_geo.inc.h: assets/fbx/ShadowCaster.fbx
 	skeletool64 -s 100 -r 0,0,0 -n shadow_caster -o src/models/shadow_caster.h assets/fbx/ShadowCaster.fbx
 
-src/models/cube_shadow.h src/models/cube_shadow_geo.inc.h: assets/fbx/CubeShadow.fbx
-	skeletool64 -s 100 -r 0,0,0 -n cube_shadow -o src/models/cube_shadow.h assets/fbx/CubeShadow.fbx
-
 src/models/ground.h src/models/ground_geo.inc.h: assets/fbx/Ground.fbx
 	skeletool64 -s 100 -r 0,0,0 -n ground -o src/models/ground.h assets/fbx/Ground.fbx
 
