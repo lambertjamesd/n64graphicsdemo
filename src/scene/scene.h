@@ -10,6 +10,7 @@ struct Scene {
     struct Camera camera;
     struct ShadowRenderer shadowRenderer;
     struct PointLight lightSource;
+    struct PointLightableMesh groundMesh;
 };
 
 void sceneInit(struct Scene* scene);

@@ -8,6 +8,7 @@
 #include "materials/ground.h"
 #include "materials/subject.h"
 #include "materials/light.h"
+#include "materials/point_light_rendered.h"
 #include "util/time.h"
 #include "sk64/skelatool_defs.h"
 
@@ -49,14 +50,18 @@ void sceneInit(struct Scene* scene) {
     scene->shadowRenderer.casterTransform.position = gShadowCasterPos;
 
     pointLightInit(&scene->lightSource, &gLightPosition, &gColorWhite, 1.0f);
+
+    pointLightableMeshInit(&scene->groundMesh, ground_Plane_normal, ground_model_gfx);
 }
 
 void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     cameraSetupMatrices(&scene->camera, renderState, (float)SCREEN_WD / (float)SCREEN_HT);
     gDPSetRenderMode(renderState->dl++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
 
-    gSPDisplayList(renderState->dl++, ground_mat);
-    gSPDisplayList(renderState->dl++, ground_model_gfx);
+    pointLightableCalc(&scene->groundMesh, &scene->lightSource);
+    // gSPDisplayList(renderState->dl++, ground_mat);
+    gSPDisplayList(renderState->dl++, point_light_mat);
+    gSPDisplayList(renderState->dl++, scene->groundMesh.drawCommand);
 
     gSPDisplayList(renderState->dl++, ground_in_shadow_mat);
     shadowRendererRenderProjection(&scene->shadowRenderer, renderState, &scene->lightSource, &gZeroVec, &gUp);
@@ -73,10 +78,6 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     gRecieviers[0].transform.position.y = gCameraFocus.y;
     gRecieviers[0].transform.position.z = gCameraFocus.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.33f);
     quatEulerAngles(&angles, &gRecieviers[0].transform.rotation);
-
-    scene->lightSource.position.x = gLightPosition.x + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.75f);
-    scene->lightSource.position.y = gLightPosition.y + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.5f);
-    scene->lightSource.position.z = gLightPosition.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 2.0f);
 
     Mtx* casterMatrix = renderStateRequestMatrices(renderState, 1);
 
@@ -118,4 +119,8 @@ void sceneUpdate(struct Scene* scene) {
     struct Vector3 offset;
     quatMultVector(&scene->camera.transform.rotation, &gForward, &offset);
     vector3AddScaled(&gCameraFocus, &offset, gCameraDistance, &scene->camera.transform.position);
+
+    scene->lightSource.position.x = gLightPosition.x + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.75f);
+    scene->lightSource.position.y = gLightPosition.y + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.5f);
+    scene->lightSource.position.z = gLightPosition.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 2.0f);
 }
