@@ -9,3 +9,11 @@ Gfx ground_mat[] = {
     gsDPSetCombineMode(GROUND_COMBINE_MODE, GROUND_COMBINE_MODE),
     gsSPEndDisplayList(),
 };
+
+Gfx ground_in_shadow_mat[] = {
+    gsDPPipeSync(),
+    gsSPClearGeometryMode(G_LIGHTING | G_SHADE),
+    gsDPSetPrimColor(255, 255, 16, 100, 64, 255),
+    gsDPSetCombineMode(GROUND_COMBINE_MODE, GROUND_COMBINE_MODE),
+    gsSPEndDisplayList(),
+};

@@ -9,6 +9,10 @@
 
 #define SHADOW_COMBINE_MODE     0, 0, 0, PRIMITIVE, 0, 0, 0, PRIMITIVE
 
+#define	RM_UPDATE_Z(clk)		\
+	Z_CMP | Z_UPD | ZMODE_OPA |					\
+	GBL_c##clk(G_BL_CLR_MEM, G_BL_1, G_BL_CLR_MEM, G_BL_1)
+
 Gfx shadow_mat[] = {
     gsDPPipeSync(),
     gsSPClearGeometryMode(G_LIGHTING),
@@ -18,17 +22,22 @@ Gfx shadow_mat[] = {
 };
 
 void shadowRendererNewGfxFromOutline(struct Vector2* outline, unsigned pointCount, Gfx** gfxOut, Vtx** vtxOut) {
-    Vtx* vtxResult = malloc(sizeof(Vtx) * pointCount * 2);
+    Vtx* vtxResult = malloc(sizeof(Vtx) * pointCount);
     Gfx* gfxResult = malloc(sizeof(Gfx) * (7 + pointCount + (pointCount - 1) / 2));
 
     for (unsigned i = 0; i < pointCount; ++i) {
-        vtxResult[i].v.ob[0] = (short)outline[i].x;
-        vtxResult[i].v.ob[1] = 0.0f;
-        vtxResult[i].v.ob[2] = (short)outline[i].y;
+        vtxResult[i].n.ob[0] = (short)outline[i].x;
+        vtxResult[i].n.ob[1] = 0;
+        vtxResult[i].n.ob[2] = (short)outline[i].y;
+        vtxResult[i].n.flag = 0;
 
-        vtxResult[i + pointCount].v.ob[0] = (short)(SCENE_SCALE * outline[i].x);
-        vtxResult[i + pointCount].v.ob[1] = 0.0f;
-        vtxResult[i + pointCount].v.ob[2] = (short)(SCENE_SCALE * outline[i].y);
+        vtxResult[i].n.tc[0] = 0;
+        vtxResult[i].n.tc[1] = 0;
+
+        vtxResult[i].n.n[0] = 0;
+        vtxResult[i].n.n[1] = 127;
+        vtxResult[i].n.n[2] = 127;
+        vtxResult[i].n.a = 255;
     }
 
     Gfx* gfxCurrent = gfxResult;
@@ -91,15 +100,47 @@ void shadowRendererNewGfxFromOutline(struct Vector2* outline, unsigned pointCoun
     }
 }
 
+void shadowRendererGenerateProfile(struct ShadowRenderer* shadowRenderer, unsigned pointCount) {
+    shadowRenderer->shadowProfile = malloc(sizeof(Gfx) * (2 + (pointCount - 1) / 2));
+    Gfx* gfxCurrent = shadowRenderer->shadowProfile;
+    gSPVertex(gfxCurrent++, shadowRenderer->vertices, pointCount, 0);
+    for (unsigned i = 1; i + 1 < pointCount; i += 2) {
+        if (i + 2 < pointCount) {
+            gSP2Triangles(
+                gfxCurrent++, 
+                0, 
+                i, 
+                i + 1,
+                0,
+                0,
+                i + 1,
+                i + 2,
+                0
+            );
+        } else {
+            gSP1Triangle(
+                gfxCurrent++,
+                pointCount,
+                pointCount + 1,
+                pointCount + i + 1,
+                0
+            );
+        }
+    }
+
+    gSPEndDisplayList(gfxCurrent++);
+}
+
 void shadowRendererInit(struct ShadowRenderer* shadowRenderer, struct Vector2* outline, unsigned pointCount, float shadowLength) {
     shadowRenderer->shadowLength = shadowLength;
     transformInitIdentity(&shadowRenderer->casterTransform);
     shadowRendererNewGfxFromOutline(
         outline, 
         pointCount, 
-        &shadowRenderer->shape, 
+        &shadowRenderer->shadowVolume, 
         &shadowRenderer->vertices
     );
+    shadowRendererGenerateProfile(shadowRenderer, pointCount);
 }
 
 void shadowRendererRender(
@@ -174,10 +215,10 @@ void shadowRendererRender(
     if (lightVerticalOffset < 0.0f) {
         gSPGeometryMode(renderState->dl++, G_CULL_BACK, G_CULL_FRONT);
     }
-    gDPSetRenderMode(renderState->dl++, G_RM_ZB_XLU_SURF | Z_UPD, G_RM_ZB_XLU_SURF2 | Z_UPD);
+    gDPSetRenderMode(renderState->dl++, RM_UPDATE_Z(1), RM_UPDATE_Z(2));
     gSPSegment(renderState->dl++, MATRIX_TRANSFORM_SEGMENT, shadowMatrices);
     gSPDisplayList(renderState->dl++, shadow_mat);
-    gSPDisplayList(renderState->dl++, shadowRenderer->shape);
+    gSPDisplayList(renderState->dl++, shadowRenderer->shadowVolume);
 
 
     gDPPipeSync(renderState->dl++);
@@ -207,10 +248,10 @@ void shadowRendererRender(
     if (lightVerticalOffset > 0.0f) {
         gSPGeometryMode(renderState->dl++, G_CULL_BACK, G_CULL_FRONT);
     }
-    gDPSetRenderMode(renderState->dl++, G_RM_ZB_XLU_SURF | Z_UPD, G_RM_ZB_XLU_SURF2 | Z_UPD);
+    gDPSetRenderMode(renderState->dl++, RM_UPDATE_Z(1), RM_UPDATE_Z(2));
     gSPSegment(renderState->dl++, MATRIX_TRANSFORM_SEGMENT, shadowMatrices);
     gSPDisplayList(renderState->dl++, shadow_mat);
-    gSPDisplayList(renderState->dl++, shadowRenderer->shape);
+    gSPDisplayList(renderState->dl++, shadowRenderer->shadowVolume);
 
     gDPPipeSync(renderState->dl++);
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_DECAL, G_RM_ZB_OPA_DECAL2);
@@ -234,4 +275,34 @@ void shadowRendererRender(
         gSPDisplayList(renderState->dl++, reciever->geometry);
         gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
     }
+}
+
+void shadowRendererRenderProjection(
+    struct ShadowRenderer* shadowRenderer, 
+    struct RenderState* renderState, 
+    struct PointLight* fromLight,
+    struct Vector3* toPoint,
+    struct Vector3* normal
+) {
+    struct Vector3 offset;
+    vector3Sub(toPoint, &fromLight->position, &offset);
+    float distToFloor = vector3Dot(&offset, normal);
+
+    vector3Sub(&shadowRenderer->casterTransform.position, &fromLight->position, &offset);
+    float distToCaster = vector3Dot(&offset, normal);
+
+    float uniformScale = distToFloor / distToCaster;
+
+    struct Transform finalTransform;
+    vector3AddScaled(&fromLight->position, &offset, uniformScale, &finalTransform.position);
+    finalTransform.rotation = shadowRenderer->casterTransform.rotation;
+    vector3Scale(&gOneVec, &finalTransform.scale, uniformScale);
+
+    Mtx* matrix = renderStateRequestMatrices(renderState, 1);
+
+    transformToMatrixL(&finalTransform, matrix);
+    
+    gSPMatrix(renderState->dl++, matrix, G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
+    gSPDisplayList(renderState->dl++, shadowRenderer->shadowProfile);
+    gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
 }

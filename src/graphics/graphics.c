@@ -46,8 +46,8 @@ void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callba
 	
     gDPPipeSync(renderState->dl++);
     gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WD, osVirtualToPhysical(targetTask->framebuffer));
-    gDPSetFillColor(renderState->dl++, (GPACK_RGBA5551(255, 0, 0, 1) << 16 | 
-			       GPACK_RGBA5551(255, 0, 0, 1)));
+    gDPSetFillColor(renderState->dl++, (GPACK_RGBA5551(0, 16, 32, 1) << 16 | 
+			       GPACK_RGBA5551(0, 16, 32, 1)));
     gDPFillRectangle(renderState->dl++, 0, 0, SCREEN_WD-1, SCREEN_HT-1);
     gDPPipeSync(renderState->dl++);
     gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE); 

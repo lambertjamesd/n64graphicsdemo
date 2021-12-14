@@ -5,3 +5,4 @@
 #include "shadow_caster_geo.inc.h"
 #include "ground_geo.inc.h"
 #include "subject_geo.inc.h"
+#include "sphere_geo.inc.h"

@@ -22,7 +22,8 @@ struct ShadowReceiver {
 };
 
 struct ShadowRenderer {
-    Gfx* shape;
+    Gfx* shadowVolume;
+    Gfx* shadowProfile;
     Vtx* vertices;
     struct Transform casterTransform;
     float shadowLength;
@@ -35,6 +36,13 @@ void shadowRendererRender(
     struct PointLight* fromLight,
     struct ShadowReceiver* recievers, 
     unsigned recieverCount
+);
+void shadowRendererRenderProjection(
+    struct ShadowRenderer* shadowRenderer, 
+    struct RenderState* renderState, 
+    struct PointLight* fromLight,
+    struct Vector3* toPoint,
+    struct Vector3* normal
 );
 
 #endif

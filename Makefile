@@ -83,6 +83,9 @@ src/models/ground.h src/models/ground_geo.inc.h: assets/fbx/Ground.fbx
 src/models/subject.h src/models/subject_geo.inc.h: assets/fbx/Subject.fbx
 	skeletool64 -s 100 -r 0,0,0 -n subject -o src/models/subject.h assets/fbx/Subject.fbx
 
+src/models/sphere.h src/models/sphere_geo.inc.h: assets/fbx/Sphere.fbx
+	skeletool64 -s 100 -r 0,0,0 -n sphere -o src/models/sphere.h assets/fbx/Sphere.fbx
+
 ####################
 ## Linking
 ####################

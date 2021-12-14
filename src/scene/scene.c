@@ -7,11 +7,12 @@
 #include "materials/shadow_caster.h"
 #include "materials/ground.h"
 #include "materials/subject.h"
+#include "materials/light.h"
 #include "util/time.h"
 #include "sk64/skelatool_defs.h"
 
 struct Vector3 gCameraFocus = {0.0f, SCENE_SCALE, 0.0f};
-struct Vector3 gCameraStart = {0.0f, SCENE_SCALE * 3.0f, SCENE_SCALE * 7.0f};
+struct Vector3 gCameraStart = {0.0f, SCENE_SCALE * 3.0f, SCENE_SCALE * 15.0f};
 struct Vector3 gShadowCasterPos = {0.0f, SCENE_SCALE * 2.0f, 0.0f};
 struct Vector3 gLightPosition = {0.0f, SCENE_SCALE * 6.0f, 0.0f};
 float gCameraDistance = 0.0f;
@@ -32,7 +33,7 @@ struct Vector2 gSquareShadow[] = {
 Lights2 static_light = gdSPDefLights2(
     32, 32, 32, 
     0, 0, 0, 0, 0x7f, 0,
-    2, 16, 32, 0, 0x81, 0
+    8, 24, 48, 0, 0x7f, 0
 );
 
 void sceneInit(struct Scene* scene) {
@@ -51,12 +52,17 @@ void sceneInit(struct Scene* scene) {
 }
 
 void sceneRender(struct Scene* scene, struct RenderState* renderState) {
-
     cameraSetupMatrices(&scene->camera, renderState, (float)SCREEN_WD / (float)SCREEN_HT);
-    gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
+    gDPSetRenderMode(renderState->dl++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
 
     gSPDisplayList(renderState->dl++, ground_mat);
     gSPDisplayList(renderState->dl++, ground_model_gfx);
+
+    gSPDisplayList(renderState->dl++, ground_in_shadow_mat);
+    shadowRendererRenderProjection(&scene->shadowRenderer, renderState, &scene->lightSource, &gZeroVec, &gUp);
+    
+    gDPPipeSync(renderState->dl++);
+    gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
 
     struct Vector3 angles;
     angles.x = gTimePassed * (M_PI * 50.0f / 180.0f);
@@ -68,8 +74,8 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     gRecieviers[0].transform.position.z = gCameraFocus.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.33f);
     quatEulerAngles(&angles, &gRecieviers[0].transform.rotation);
 
-    scene->lightSource.position.x = gLightPosition.x + SCENE_SCALE * 1.5f * cosf(gTimePassed);
-    scene->lightSource.position.y = gLightPosition.y + SCENE_SCALE * 0.25f * cosf(gTimePassed * 0.5f);
+    scene->lightSource.position.x = gLightPosition.x + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.75f);
+    scene->lightSource.position.y = gLightPosition.y + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.5f);
     scene->lightSource.position.z = gLightPosition.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 2.0f);
 
     Mtx* casterMatrix = renderStateRequestMatrices(renderState, 1);
@@ -86,6 +92,13 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     gSPDisplayList(renderState->dl++, shadow_caster_model_gfx);
     gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
 
+    Mtx* lightMatrix = renderStateRequestMatrices(renderState, 1);
+    guPosition(lightMatrix, 0.0f, 0.0f, 0.0f, 0.2f, scene->lightSource.position.x, scene->lightSource.position.y, scene->lightSource.position.z);
+    gSPMatrix(renderState->dl++, lightMatrix, G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
+    gSPDisplayList(renderState->dl++, light_mat);
+    gSPDisplayList(renderState->dl++, sphere_model_gfx);
+    gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
+
     shadowRendererRender(
         &scene->shadowRenderer,
         renderState,
@@ -96,11 +109,11 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
 }
 
 void sceneUpdate(struct Scene* scene) {
-    struct Quaternion rotate;
-    quatAxisAngle(&gUp, ROTATE_PER_SECOND * gTimeDelta, &rotate);
-    struct Quaternion finalRotation;
-    quatMultiply(&rotate, &scene->camera.transform.rotation, &finalRotation);
-    scene->camera.transform.rotation = finalRotation;
+    // struct Quaternion rotate;
+    // quatAxisAngle(&gUp, ROTATE_PER_SECOND * gTimeDelta, &rotate);
+    // struct Quaternion finalRotation;
+    // quatMultiply(&rotate, &scene->camera.transform.rotation, &finalRotation);
+    // scene->camera.transform.rotation = finalRotation;
 
     struct Vector3 offset;
     quatMultVector(&scene->camera.transform.rotation, &gForward, &offset);
