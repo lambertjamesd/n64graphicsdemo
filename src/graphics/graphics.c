@@ -57,7 +57,7 @@ void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callba
     gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE); 
 
     if (callback) {
-        callback(data, renderState);
+        callback(data, renderState, targetTask);
     }
 
     gDPPipeSync(renderState->dl++);

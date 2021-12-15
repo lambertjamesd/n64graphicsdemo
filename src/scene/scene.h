@@ -14,8 +14,10 @@ struct Scene {
     struct PointLightableMesh casterMesh;
 };
 
+struct GraphicsTask;
+
 void sceneInit(struct Scene* scene);
-void sceneRender(struct Scene* scene, struct RenderState* renderState);
+void sceneRender(struct Scene* scene, struct RenderState* renderState, struct GraphicsTask* task);
 void sceneUpdate(struct Scene* scene);
 
 #endif

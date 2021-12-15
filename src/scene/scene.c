@@ -11,6 +11,7 @@
 #include "util/time.h"
 #include "sk64/skelatool_defs.h"
 #include "controls/controller.h"
+#include "shadow_map.h"
 
 struct Vector3 gCameraFocus = {0.0f, SCENE_SCALE, 0.0f};
 struct Vector3 gCameraStart = {0.0f, SCENE_SCALE * 3.0f, SCENE_SCALE * 15.0f};
@@ -62,7 +63,7 @@ void sceneInit(struct Scene* scene) {
     pointLightableMeshInit(&scene->casterMesh, shadow_caster_ShadowCaster_normal, shadow_caster_model_gfx, &gCasterColor);
 }
 
-void sceneRender(struct Scene* scene, struct RenderState* renderState) {
+void sceneRender(struct Scene* scene, struct RenderState* renderState, struct GraphicsTask* task) {
     cameraSetupMatrices(&scene->camera, renderState, (float)SCREEN_WD / (float)SCREEN_HT);
     gDPSetRenderMode(renderState->dl++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
 
@@ -111,6 +112,8 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
         gRecieviers,
         sizeof(gRecieviers) / sizeof(*gRecieviers)
     );
+
+    shadowMapRenderDebug(renderState);
 }
 
 void sceneUpdate(struct Scene* scene) {

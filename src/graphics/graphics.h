@@ -17,7 +17,7 @@ struct GraphicsTask {
 
 extern struct GraphicsTask gGraphicsTasks[2];
 
-typedef void (*GraphicsCallback)(void* data, struct RenderState* renderState);
+typedef void (*GraphicsCallback)(void* data, struct RenderState* renderState, struct GraphicsTask* task);
 
 u16* graphicsLayoutScreenBuffers(u16* memoryEnd);
 void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callback, void* data);
