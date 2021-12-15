@@ -9,6 +9,7 @@
 #include "util/time.h"
 #include "util/memory.h"
 #include "string.h"
+#include "controls/controller.h"
 
 #ifdef WITH_DEBUGGER
 #include "../debugger/debugger.h"
@@ -126,6 +127,7 @@ static void gameProc(void* arg) {
 
     sceneInit(&gScene);
     romInit();
+    controllersInit();
 #ifdef WITH_DEBUGGER
     OSThread* debugThreads[2];
     debugThreads[0] = &gameThread;
@@ -144,6 +146,7 @@ static void gameProc(void* arg) {
                     ++pendingGFX;
                 }
 
+                controllersTriggerRead();
                 sceneUpdate(&gScene);
                 timeUpdateDelta();
 
@@ -163,6 +166,9 @@ static void gameProc(void* arg) {
                 break;
             case (OS_SC_PRE_NMI_MSG):
                 pendingGFX += 2;
+                break;
+            case SIMPLE_CONTROLLER_MSG:
+                controllersUpdate();
                 break;
         }
     }

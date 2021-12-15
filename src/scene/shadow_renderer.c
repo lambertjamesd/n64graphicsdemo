@@ -10,8 +10,9 @@
 #define SHADOW_COMBINE_MODE     0, 0, 0, PRIMITIVE, 0, 0, 0, PRIMITIVE
 
 #define	RM_UPDATE_Z(clk)		\
-	Z_CMP | Z_UPD | ZMODE_OPA |					\
-	GBL_c##clk(G_BL_CLR_MEM, G_BL_1, G_BL_CLR_MEM, G_BL_1)
+    Z_CMP | Z_UPD | IM_RD | CVG_DST_WRAP | CLR_ON_CVG |	\
+	FORCE_BL | ZMODE_XLU |                          \
+	GBL_c##clk(G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA)
 
 Gfx shadow_mat[] = {
     gsDPPipeSync(),
@@ -19,6 +20,7 @@ Gfx shadow_mat[] = {
     gsDPSetCombineMode(SHADOW_COMBINE_MODE, SHADOW_COMBINE_MODE),
     gsDPSetPrimColor(255, 255, 128, 128, 128, 0),
     gsSPEndDisplayList(),
+
 };
 
 void shadowRendererNewGfxFromOutline(struct Vector2* outline, unsigned pointCount, Gfx** gfxOut, Vtx** vtxOut) {

@@ -27,6 +27,11 @@ Gfx rdpstateinit_dl[] = {
     gsDPSetConvert(0,0,0,0,0,0),
     gsDPSetKeyR(0,0,0),
     gsDPSetKeyGB(0,0,0,0,0,0),
+    gsDPPipelineMode(G_PM_1PRIMITIVE),
+    gsDPSetAlphaCompare(G_AC_NONE),
+    gsDPSetCombineKey(G_CK_NONE),
+    gsDPSetCycleType(G_CYC_1CYCLE),
+    gsDPSetTextureLUT(G_TT_NONE),
 
     /* set combine mode */
     gsDPSetCombineMode(G_CC_SHADE, G_CC_SHADE),
@@ -83,5 +88,6 @@ Gfx setup_rspstate[] = {
     gsSPClearGeometryMode(G_SHADE | G_SHADING_SMOOTH | G_CULL_BOTH | G_FOG | G_LIGHTING),
     gsSPSetGeometryMode(G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH | G_CULL_BACK),
     gsSPTexture(0, 0, 0, 0, G_OFF),
+    gsSPNumLights(NUMLIGHTS_0),
     gsSPEndDisplayList(),
 };

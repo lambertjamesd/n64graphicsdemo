@@ -16,6 +16,8 @@
 
 #define SCENE_SCALE 100
 
+#define SIMPLE_CONTROLLER_MSG	    (5)
+
 #endif /* _LANGUAGE_C */
 
 #endif

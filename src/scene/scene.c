@@ -10,6 +10,7 @@
 #include "materials/point_light_rendered.h"
 #include "util/time.h"
 #include "sk64/skelatool_defs.h"
+#include "controls/controller.h"
 
 struct Vector3 gCameraFocus = {0.0f, SCENE_SCALE, 0.0f};
 struct Vector3 gCameraStart = {0.0f, SCENE_SCALE * 3.0f, SCENE_SCALE * 15.0f};
@@ -29,6 +30,9 @@ struct Vector2 gSquareShadow[] = {
 };
 
 #define ROTATE_PER_SECOND       (M_PI * 0.25f)
+#define MOVE_PER_SECOND         (3.0f * SCENE_SCALE)
+#define MIN_DISTANCE            (SCENE_SCALE * 2.0f)
+#define MAX_DISTANCE            (SCENE_SCALE * 20.0f)
 
 Lights2 static_light = gdSPDefLights2(
     32, 32, 32, 
@@ -41,7 +45,7 @@ struct Coloru8 gGroundColor = {100, 150, 100, 255};
 struct Coloru8 gCasterColor = {32, 100, 200, 255};
 
 void sceneInit(struct Scene* scene) {
-    cameraInit(&scene->camera, 45.0f, 50.0f, 5000.0f);
+    cameraInit(&scene->camera, 45.0f, SCENE_SCALE * 0.25f, SCENE_SCALE * 30.0f);
 
     scene->camera.transform.position = gCameraStart;
     struct Vector3 offset;
@@ -120,18 +124,35 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
 }
 
 void sceneUpdate(struct Scene* scene) {
-    // struct Quaternion rotate;
-    // quatAxisAngle(&gUp, ROTATE_PER_SECOND * gTimeDelta, &rotate);
-    // struct Quaternion finalRotation;
-    // quatMultiply(&rotate, &scene->camera.transform.rotation, &finalRotation);
-    // scene->camera.transform.rotation = finalRotation;
+    OSContPad* input = controllersGetControllerData(0);
+
+    struct Quaternion rotate;
+    quatAxisAngle(&gUp, (ROTATE_PER_SECOND * (1.0f / 80.0f)) * gTimeDelta * input->stick_x, &rotate);
+    struct Quaternion finalRotation;
+    quatMultiply(&rotate, &scene->camera.transform.rotation, &finalRotation);
+    scene->camera.transform.rotation = finalRotation;
+
+    quatAxisAngle(&gRight, -(ROTATE_PER_SECOND * (1.0f / 80.0f)) * gTimeDelta * input->stick_y, &rotate);
+    quatMultiply(&scene->camera.transform.rotation, &rotate, &finalRotation);
+    scene->camera.transform.rotation = finalRotation;
+
+    if (controllerGetButton(0, A_BUTTON)) {
+        gCameraDistance -= MOVE_PER_SECOND * gTimeDelta;
+    }
+
+    if (controllerGetButton(0, B_BUTTON)) {
+        gCameraDistance += MOVE_PER_SECOND * gTimeDelta;
+    }
+
+    gCameraDistance = MAX(MIN_DISTANCE, gCameraDistance);
+    gCameraDistance = MIN(MAX_DISTANCE, gCameraDistance);
 
     struct Vector3 offset;
     quatMultVector(&scene->camera.transform.rotation, &gForward, &offset);
     vector3AddScaled(&gCameraFocus, &offset, gCameraDistance, &scene->camera.transform.position);
 
     scene->lightSource.position.x = gLightPosition.x + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.75f);
-    scene->lightSource.position.y = gLightPosition.y + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.5f);
+    scene->lightSource.position.y = gLightPosition.y + SCENE_SCALE * 2.0f * cosf(gTimePassed * 0.5f);
     scene->lightSource.position.z = gLightPosition.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 2.0f);
-    scene->lightSource.intensity = 50.0f * (1.0f - cosf(gTimePassed * 0.3f));
+    scene->lightSource.intensity = 20.0f * (1.0f - cosf(gTimePassed * 0.3f)) + 10.0f;
 }

@@ -6,7 +6,10 @@ struct GraphicsTask gGraphicsTasks[2];
 extern OSMesgQueue  gfxFrameMsgQ;
 extern OSMesgQueue	*schedulerCommandQueue;
 
+#define RDP_OUTPUT_SIZE 0x4000
+
 u64* rdpOutput;
+u64 rdpOutputSize = 0;
 u64 __attribute__((aligned(16))) dram_stack[SP_DRAM_STACK_SIZE64 + 1];
 u64 __attribute__((aligned(16))) gfxYieldBuf2[OS_YIELD_DATA_SIZE/sizeof(u64)];
 u32 firsttime = 1;
@@ -20,7 +23,7 @@ u16* graphicsLayoutScreenBuffers(u16* memoryEnd) {
     gGraphicsTasks[0].msg.type = OS_SC_DONE_MSG;
     gGraphicsTasks[1].msg.type = OS_SC_DONE_MSG;
 
-    rdpOutput = (u64*)(gGraphicsTasks[1].framebuffer - SP_DRAM_STACK_SIZE8  / sizeof(u16));
+    rdpOutput = (u64*)(gGraphicsTasks[1].framebuffer - RDP_OUTPUT_SIZE  / sizeof(u16));
     return (u16*)rdpOutput;
 }
 
@@ -74,7 +77,7 @@ void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callba
     task->ucode = (u64*)gspF3DEX2_fifoTextStart;
     task->ucode_data = (u64*)gspF3DEX2_fifoDataStart;
     task->output_buff = (u64*)rdpOutput;
-    task->output_buff_size = ((u64*)rdpOutput + SP_DRAM_STACK_SIZE64);
+    task->output_buff_size = &rdpOutputSize;
     task->ucode_data_size = SP_UCODE_DATA_SIZE;
     task->dram_stack = (u64*)dram_stack;
     task->dram_stack_size = SP_DRAM_STACK_SIZE8;
