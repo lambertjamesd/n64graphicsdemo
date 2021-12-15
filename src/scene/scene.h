@@ -11,6 +11,7 @@ struct Scene {
     struct ShadowRenderer shadowRenderer;
     struct PointLight lightSource;
     struct PointLightableMesh groundMesh;
+    struct PointLightableMesh casterMesh;
 };
 
 void sceneInit(struct Scene* scene);

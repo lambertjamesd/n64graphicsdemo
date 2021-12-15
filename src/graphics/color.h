@@ -14,5 +14,6 @@ extern struct Coloru8 gHalfTransparentBlack;
 extern struct Coloru8 gHalfTransparentWhite;
 
 void colorU8Lerp(struct Coloru8* from, struct Coloru8* to, float lerp, struct Coloru8* output);
+void colorU8Mul(struct Coloru8* a, struct Coloru8* b, struct Coloru8* out);
 
 #endif

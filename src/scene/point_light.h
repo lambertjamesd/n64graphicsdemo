@@ -4,7 +4,9 @@
 #include <ultra64.h>
 
 #include "math/vector3.h"
+#include "math/transform.h"
 #include "graphics/color.h"
+#include "graphics/renderstate.h"
 
 struct PointLight {
     struct Vector3 position;
@@ -20,6 +22,7 @@ struct PointLightableMesh {
     Vtx* oututVertices;
     Gfx* drawCommand;
     unsigned vertexCount;
+    struct Coloru8 color;
 };
 
 extern Light gLightBlack;
@@ -27,7 +30,9 @@ extern Light gLightBlack;
 void pointLightInit(struct PointLight* pointLight, struct Vector3* position, struct Coloru8* color, float intensity);
 void pointLightCalculateLight(struct PointLight* pointLight, struct Vector3* target, Light* output);
 
-void pointLightableMeshInit(struct PointLightableMesh* mesh, Vtx* inputVertices, Gfx* drawCommand);
-void pointLightableCalc(struct PointLightableMesh* mesh, struct PointLight* pointLight);
+void pointLightableSetMaterial(struct PointLightableMesh* mesh, struct RenderState* renderState, struct Coloru8* ambient);
+void pointLightableSetMaterialInShadow(struct PointLightableMesh* mesh, struct RenderState* renderState, struct Coloru8* ambient);
+void pointLightableMeshInit(struct PointLightableMesh* mesh, Vtx* inputVertices, Gfx* drawCommand, struct Coloru8* color);
+void pointLightableCalc(struct PointLightableMesh* mesh, struct Transform* meshTransform, struct PointLight* pointLight);
 
 #endif
