@@ -1,5 +1,6 @@
 #include "graphics.h"
 #include "initgfx.h"
+#include "util/memory.h"
 
 struct GraphicsTask gGraphicsTasks[2];
 
@@ -9,12 +10,11 @@ extern OSMesgQueue	*schedulerCommandQueue;
 #define RDP_OUTPUT_SIZE 0x4000
 
 u64* rdpOutput;
-u64 rdpOutputSize = 0;
 u64 __attribute__((aligned(16))) dram_stack[SP_DRAM_STACK_SIZE64 + 1];
 u64 __attribute__((aligned(16))) gfxYieldBuf2[OS_YIELD_DATA_SIZE/sizeof(u64)];
 u32 firsttime = 1;
 
-u16 __attribute__((aligned(16))) zbuffer[SCREEN_HT * SCREEN_WD];
+u16 __attribute__((aligned(64))) zbuffer[SCREEN_HT * SCREEN_WD];
 
 u16* graphicsLayoutScreenBuffers(u16* memoryEnd) {
     gGraphicsTasks[0].framebuffer = memoryEnd - SCREEN_WD * SCREEN_HT;
@@ -24,6 +24,7 @@ u16* graphicsLayoutScreenBuffers(u16* memoryEnd) {
     gGraphicsTasks[1].msg.type = OS_SC_DONE_MSG;
 
     rdpOutput = (u64*)(gGraphicsTasks[1].framebuffer - RDP_OUTPUT_SIZE  / sizeof(u16));
+    zeroMemory(rdpOutput, RDP_OUTPUT_SIZE);
     return (u16*)rdpOutput;
 }
 
@@ -59,10 +60,13 @@ void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callba
         callback(data, renderState);
     }
 
+    gDPPipeSync(renderState->dl++);
     gDPFullSync(renderState->dl++);
     gSPEndDisplayList(renderState->dl++);
 
     renderStateFlushCache(renderState);
+
+
 
     OSScTask *scTask = &targetTask->task;
 
@@ -77,7 +81,7 @@ void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callba
     task->ucode = (u64*)gspF3DEX2_fifoTextStart;
     task->ucode_data = (u64*)gspF3DEX2_fifoDataStart;
     task->output_buff = (u64*)rdpOutput;
-    task->output_buff_size = &rdpOutputSize;
+    task->output_buff_size = (u64*)rdpOutput + RDP_OUTPUT_SIZE/sizeof(u64);
     task->ucode_data_size = SP_UCODE_DATA_SIZE;
     task->dram_stack = (u64*)dram_stack;
     task->dram_stack_size = SP_DRAM_STACK_SIZE8;

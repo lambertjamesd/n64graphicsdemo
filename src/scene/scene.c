@@ -82,21 +82,9 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     gDPPipeSync(renderState->dl++);
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
 
-    struct Vector3 angles;
-    angles.x = gTimePassed * (M_PI * 50.0f / 180.0f);
-    angles.y = gTimePassed * (M_PI * 30.0f / 180.0f);
-    angles.z = 0.0f;
-    vector3Scale(&gOneVec, &gRecieviers[0].transform.scale, 0.5f);
-    gRecieviers[0].transform.position.x = gCameraFocus.x + SCENE_SCALE * 1.5f * cosf(gTimePassed);
-    gRecieviers[0].transform.position.y = gCameraFocus.y;
-    gRecieviers[0].transform.position.z = gCameraFocus.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.33f);
-    quatEulerAngles(&angles, &gRecieviers[0].transform.rotation);
-
     Mtx* casterMatrix = renderStateRequestMatrices(renderState, 1);
 
     guTranslate(casterMatrix, gShadowCasterPos.x, gShadowCasterPos.y, gShadowCasterPos.z);
-
-    gSPSetLights2(renderState->dl++, static_light);
 
     gSPMatrix(renderState->dl++, casterMatrix, G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
     gSPDisplayList(renderState->dl++, point_light_mat);
@@ -113,6 +101,8 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState) {
     gDPSetPrimColor(renderState->dl++, 255, 255, glowColor.r, glowColor.g, glowColor.b, 255);
     gSPDisplayList(renderState->dl++, sphere_model_gfx);
     gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
+
+    gSPSetLights2(renderState->dl++, static_light);
 
     shadowRendererRender(
         &scene->shadowRenderer,
@@ -155,4 +145,14 @@ void sceneUpdate(struct Scene* scene) {
     scene->lightSource.position.y = gLightPosition.y + SCENE_SCALE * 2.0f * cosf(gTimePassed * 0.5f);
     scene->lightSource.position.z = gLightPosition.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 2.0f);
     scene->lightSource.intensity = 20.0f * (1.0f - cosf(gTimePassed * 0.3f)) + 10.0f;
+
+    struct Vector3 angles;
+    angles.x = gTimePassed * (M_PI * 50.0f / 180.0f);
+    angles.y = gTimePassed * (M_PI * 30.0f / 180.0f);
+    angles.z = 0.0f;
+    vector3Scale(&gOneVec, &gRecieviers[0].transform.scale, 0.5f);
+    gRecieviers[0].transform.position.x = gCameraFocus.x + SCENE_SCALE * 1.5f * cosf(gTimePassed);
+    gRecieviers[0].transform.position.y = gCameraFocus.y;
+    gRecieviers[0].transform.position.z = gCameraFocus.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.33f);
+    quatEulerAngles(&angles, &gRecieviers[0].transform.rotation);
 }

@@ -16,8 +16,6 @@ static Vp fullscreenViewport = {
  * microcode is loaded.  See gspFast3D (3P) for details
  */
 Gfx rdpstateinit_dl[] = {
-
-    /* set all of the attribute registers to zero */
     gsDPSetEnvColor(0,0,0,0),
     gsDPSetPrimColor(0,0,0,0,0,0),
     gsDPSetBlendColor(0,0,0,0),
@@ -27,19 +25,9 @@ Gfx rdpstateinit_dl[] = {
     gsDPSetConvert(0,0,0,0,0,0),
     gsDPSetKeyR(0,0,0),
     gsDPSetKeyGB(0,0,0,0,0,0),
-    gsDPPipelineMode(G_PM_1PRIMITIVE),
-    gsDPSetAlphaCompare(G_AC_NONE),
-    gsDPSetCombineKey(G_CK_NONE),
-    gsDPSetCycleType(G_CYC_1CYCLE),
-    gsDPSetTextureLUT(G_TT_NONE),
 
-    /* set combine mode */
     gsDPSetCombineMode(G_CC_SHADE, G_CC_SHADE),
 
-    /* initialize the scissor box */
-    gsDPSetScissor(G_SC_NON_INTERLACE, 0, 0, SCREEN_WD, SCREEN_HT),
-
-    /* initialize all the texture tile descriptors to zero */
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
     gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0),
@@ -66,6 +54,7 @@ Gfx rdpstateinit_dl[] = {
     gsDPSetTileSize(7, 0, 0, (1 - 1) << G_TEXTURE_IMAGE_FRAC, (1 - 1) <<
 		G_TEXTURE_IMAGE_FRAC),
 
+		gsDPSetColorDither(G_CD_BAYER),
 
     gsDPPipeSync(),
     gsSPEndDisplayList(),
@@ -82,12 +71,14 @@ Gfx setup_rdpstate[] = {
     gsSPEndDisplayList(),
 };
 
+Lights1 gInitialLights = gdSPDefLights1(0, 0, 0, 0, 0, 0, 0, 0x7f, 0);
+
 /* intialize the RSP state: */
 Gfx setup_rspstate[] = {
     gsSPViewport(&fullscreenViewport),
-    gsSPClearGeometryMode(G_SHADE | G_SHADING_SMOOTH | G_CULL_BOTH | G_FOG | G_LIGHTING),
+    gsSPClearGeometryMode(G_SHADE | G_SHADING_SMOOTH | G_CULL_BOTH | G_FOG | G_LIGHTING | G_TEXTURE_GEN | G_TEXTURE_GEN_LINEAR),
     gsSPSetGeometryMode(G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH | G_CULL_BACK),
     gsSPTexture(0, 0, 0, 0, G_OFF),
-    gsSPNumLights(NUMLIGHTS_0),
+    gsSPSetLights1(gInitialLights),
     gsSPEndDisplayList(),
 };
