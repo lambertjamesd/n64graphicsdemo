@@ -5,6 +5,9 @@
 #include "graphics/graphics.h"
 #include "math/plane.h"
 
+#define SHADOW_MAP_WIDTH    32
+#define SHADOW_MAP_HEIGHT   64
+
 u16 __attribute__((aligned(64))) shadow_map_buffer[SHADOW_MAP_WIDTH * SHADOW_MAP_HEIGHT];
 
 static Vp shadowMapViewport = {
@@ -14,7 +17,9 @@ static Vp shadowMapViewport = {
   }
 };
 
-#define SHADLW_MAP_COMBINE_MODE        0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT
+#define SHADOW_MAP_COMBINE_MODE        0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT
+
+#define SHADOW_PROJECTION_COMBINE_MODE 0, 0, 0, ENVIRONMENT, 0, 0, 0, TEXEL0
 
 Vtx shadowMapVtxData[] = {
     {{{100, 0, 100}, 0, {SHADOW_MAP_WIDTH << 5, 0}, {255, 255, 255, 255}}},
@@ -53,7 +58,7 @@ struct Vector3 shadowCornerConfig[] = {
 Gfx shadowMapMaterial[] = {
     gsDPPipeSync(),
     gsDPSetEnvColor(255, 255, 255, 255),
-    gsDPSetCombineMode(SHADLW_MAP_COMBINE_MODE, SHADLW_MAP_COMBINE_MODE),
+    gsDPSetCombineMode(SHADOW_MAP_COMBINE_MODE, SHADOW_MAP_COMBINE_MODE),
     gsSPClearGeometryMode(G_LIGHTING | G_ZBUFFER),
     gsSPEndDisplayList(),
 };
@@ -91,8 +96,9 @@ void shadowMapRenderOntoPlane(struct ShadowMap* shadowMap, struct RenderState* r
     gDPPipeSync(renderState->dl++);
     gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE);
     gDPSetTextureLUT(renderState->dl++, G_TT_NONE);
-    gDPSetRenderMode(renderState->dl++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
-    gDPSetCombineLERP(renderState->dl++, 0, 0, 0, TEXEL0, 0, 0, 0, 1, 0, 0, 0, TEXEL0, 0, 0, 0, 1);
+    gDPSetRenderMode(renderState->dl++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+    gDPSetCombineMode(renderState->dl++, SHADOW_PROJECTION_COMBINE_MODE, SHADOW_PROJECTION_COMBINE_MODE);
+    gDPSetEnvColor(renderState->dl++, shadowMap->shadowColor.r, shadowMap->shadowColor.g, shadowMap->shadowColor.b, shadowMap->shadowColor.a);
     gDPTileSync(renderState->dl++);
     gDPLoadTextureTile(
         renderState->dl++,
@@ -102,8 +108,8 @@ void shadowMapRenderOntoPlane(struct ShadowMap* shadowMap, struct RenderState* r
         0, 0,
         SHADOW_MAP_WIDTH-1, SHADOW_MAP_HEIGHT-1,
         0,
-        G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR,
-        5, 5, 
+        G_TX_CLAMP | G_TX_NOMIRROR, G_TX_CLAMP | G_TX_NOMIRROR,
+        0, 0, 
         0, 0
     );
 
@@ -159,7 +165,7 @@ void shadowMapRender(struct ShadowMap* shadowMap, struct RenderState* renderStat
     gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SHADOW_MAP_WIDTH, osVirtualToPhysical(shadow_map_buffer));
     gDPSetScissor(renderState->dl++, G_SC_NON_INTERLACE, 0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
     gSPViewport(renderState->dl++, &shadowMapViewport);
-    gDPSetFillColor(renderState->dl++, 0x00010001);
+    gDPSetFillColor(renderState->dl++, 0x00000000);
     gDPFillRectangle(renderState->dl++, 0, 0, SHADOW_MAP_WIDTH-1, SHADOW_MAP_HEIGHT-1);
     gDPPipeSync(renderState->dl++);
     gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE);
@@ -202,8 +208,8 @@ void shadowMapRenderDebug(struct RenderState* renderState) {
         0, 0,
         SHADOW_MAP_WIDTH-1, SHADOW_MAP_HEIGHT-1,
         0,
-        G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR,
-        5, 5, 
+        G_TX_CLAMP | G_TX_NOMIRROR, G_TX_CLAMP | G_TX_NOMIRROR,
+        0, 0, 
         0, 0
     );
     gSPTextureRectangle(

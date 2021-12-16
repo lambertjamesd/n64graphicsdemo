@@ -8,9 +8,6 @@
 #include "shadow_map.h"
 #include "point_light.h"
 
-#define SHADOW_MAP_WIDTH    32
-#define SHADOW_MAP_HEIGHT   32
-
 struct ShadowMap {
     Gfx* subject;
     float subjectRadius;
