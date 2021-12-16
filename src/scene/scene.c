@@ -121,8 +121,6 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
         gRecieviers,
         sizeof(gRecieviers) / sizeof(*gRecieviers)
     );
-
-    shadowMapRenderDebug(renderState);
 }
 
 void sceneUpdate(struct Scene* scene) {
