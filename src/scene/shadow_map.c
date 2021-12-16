@@ -5,7 +5,7 @@
 #include "graphics/graphics.h"
 #include "math/plane.h"
 
-#define SHADOW_MAP_WIDTH    32
+#define SHADOW_MAP_WIDTH    64
 #define SHADOW_MAP_HEIGHT   64
 
 u16 __attribute__((aligned(64))) shadow_map_buffer[SHADOW_MAP_WIDTH * SHADOW_MAP_HEIGHT];
@@ -103,7 +103,7 @@ void shadowMapRenderOntoPlane(struct ShadowMap* shadowMap, struct RenderState* r
     gDPLoadTextureTile(
         renderState->dl++,
         shadow_map_buffer,
-        G_IM_FMT_RGBA, G_IM_SIZ_16b,
+        G_IM_FMT_I, G_IM_SIZ_8b,
         SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT,
         0, 0,
         SHADOW_MAP_WIDTH-1, SHADOW_MAP_HEIGHT-1,
@@ -162,10 +162,10 @@ void shadowMapRender(struct ShadowMap* shadowMap, struct RenderState* renderStat
     gSPForceMatrix(renderState->dl++, lightMtx);
     gDPPipeSync(renderState->dl++);
     gDPSetCycleType(renderState->dl++, G_CYC_FILL);
-    gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SHADOW_MAP_WIDTH, osVirtualToPhysical(shadow_map_buffer));
+    gDPSetColorImage(renderState->dl++, G_IM_FMT_CI, G_IM_SIZ_8b, SHADOW_MAP_WIDTH, osVirtualToPhysical(shadow_map_buffer));
     gDPSetScissor(renderState->dl++, G_SC_NON_INTERLACE, 0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
     gSPViewport(renderState->dl++, &shadowMapViewport);
-    gDPSetFillColor(renderState->dl++, 0x00000000);
+    gDPSetFillColor(renderState->dl++, 0);
     gDPFillRectangle(renderState->dl++, 0, 0, SHADOW_MAP_WIDTH-1, SHADOW_MAP_HEIGHT-1);
     gDPPipeSync(renderState->dl++);
     gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE);
@@ -203,7 +203,7 @@ void shadowMapRenderDebug(struct RenderState* renderState) {
     gDPLoadTextureTile(
         renderState->dl++,
         shadow_map_buffer,
-        G_IM_FMT_RGBA, G_IM_SIZ_16b,
+        G_IM_FMT_I, G_IM_SIZ_8b,
         SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT,
         0, 0,
         SHADOW_MAP_WIDTH-1, SHADOW_MAP_HEIGHT-1,
