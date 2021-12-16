@@ -3,6 +3,7 @@
 #include "defs.h"
 #include "util/memory.h"
 #include "math/mathf.h"
+#include "graphics/graphics.h"
 #include "defs.h"
 
 Light gLightBlack = {{{0, 0, 0}, 0, {0, 0, 0}, 0, {0, 0x7f, 0}, 0}};
@@ -43,8 +44,6 @@ void pointLightCalculateLight(struct PointLight* pointLight, struct Vector3* tar
 }
 
 #define MAX_REASONABLE_VERTICES     1000
-
-#define GET_GFX_TYPE(gfx)       (_SHIFTR((gfx)->words.w0, 24, 8))
 
 #define LIGHTING_COMBINE_MODE   TEXEL0, 0, SHADE, ENVIRONMENT, 0, 0, 0, ENVIRONMENT
 #define LIGHTING_COMBINE_MODE_IN_SHADOW   0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT
@@ -178,4 +177,6 @@ void pointLightableCalc(struct PointLightableMesh* mesh, struct Transform* meshT
         output->cn[2] = col.b;
         output->cn[3] = col.a;
     }
+
+    osWritebackDCache(mesh->oututVertices, sizeof(Vtx) * mesh->vertexCount);
 }

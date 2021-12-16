@@ -2,15 +2,24 @@
 #define __SHADOW_MAP_H__
 
 #include <ultra64.h>
-#include "graphics/renderstate.h"
+#include "graphics/graphics.h"
 #include "math/transform.h"
+#include "math/plane.h"
 #include "shadow_map.h"
 #include "point_light.h"
 
 #define SHADOW_MAP_WIDTH    32
 #define SHADOW_MAP_HEIGHT   32
 
-void shadowMapRender(struct RenderState* renderState, struct PointLight* from, struct Transform* subjectTransform, Gfx* subject, float subjectRadius);
+struct ShadowMap {
+    Gfx* subject;
+    float subjectRadius;
+    struct Coloru8 shadowColor;
+};
+
+void shadowMapInit(struct ShadowMap* shadowMap, Gfx* subject, struct Coloru8 shadowColor);
+void shadowMapRender(struct ShadowMap* shadowMap, struct RenderState* renderState, struct GraphicsTask* gfxTask, struct PointLight* from, struct Transform* subjectTransform, struct Plane* onto);
 void shadowMapRenderDebug(struct RenderState* renderState);
+
 
 #endif

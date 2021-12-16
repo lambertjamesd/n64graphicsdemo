@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "graphics/renderstate.h"
 #include "shadow_renderer.h"
+#include "shadow_map.h"
 #include "point_light.h"
 
 struct Scene {
@@ -12,6 +13,7 @@ struct Scene {
     struct PointLight lightSource;
     struct PointLightableMesh groundMesh;
     struct PointLightableMesh casterMesh;
+    struct ShadowMap shadowMap;
 };
 
 struct GraphicsTask;

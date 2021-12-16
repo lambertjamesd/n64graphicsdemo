@@ -140,10 +140,14 @@ static void gameProc(void* arg) {
         
         switch (msg->type) {
             case (OS_SC_RETRACE_MSG):
-                if (pendingGFX < 2) {
+                static int renderSkip = 1;
+
+                if (pendingGFX < 2 && !renderSkip) {
                     graphicsCreateTask(&gGraphicsTasks[drawBufferIndex], (GraphicsCallback)sceneRender, &gScene);
                     drawBufferIndex = drawBufferIndex ^ 1;
                     ++pendingGFX;
+                } else if (renderSkip) {
+                    --renderSkip;
                 }
 
                 controllersTriggerRead();

@@ -61,6 +61,10 @@ void sceneInit(struct Scene* scene) {
 
     pointLightableMeshInit(&scene->groundMesh, ground_Plane_normal, ground_model_gfx, &gGroundColor);
     pointLightableMeshInit(&scene->casterMesh, shadow_caster_ShadowCaster_normal, shadow_caster_model_gfx, &gCasterColor);
+
+    struct Coloru8 groundShadowColor;
+    colorU8Mul(&gAmbient, &gGroundColor, &groundShadowColor);
+    shadowMapInit(&scene->shadowMap, subject_model_gfx, groundShadowColor);
 }
 
 void sceneRender(struct Scene* scene, struct RenderState* renderState, struct GraphicsTask* task) {
@@ -79,6 +83,11 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
 
     pointLightableSetMaterialInShadow(&scene->groundMesh, renderState, &gAmbient);
     shadowRendererRenderProjection(&scene->shadowRenderer, renderState, &scene->lightSource, &gZeroVec, &gUp);
+
+    struct Plane groundPlane;
+    groundPlane.normal = gUp;
+    groundPlane.d = 0.0f;
+    shadowMapRender(&scene->shadowMap, renderState, task, &scene->lightSource, &gRecieviers[0].transform, &groundPlane);
     
     gDPPipeSync(renderState->dl++);
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);

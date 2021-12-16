@@ -13,9 +13,13 @@ struct GraphicsTask {
     OSScTask task;
     OSScMsg msg;
     u16 *framebuffer;
+    u16 taskIndex;
 };
 
 extern struct GraphicsTask gGraphicsTasks[2];
+extern Vp fullscreenViewport;
+
+#define GET_GFX_TYPE(gfx)       (_SHIFTR((gfx)->words.w0, 24, 8))
 
 typedef void (*GraphicsCallback)(void* data, struct RenderState* renderState, struct GraphicsTask* task);
 

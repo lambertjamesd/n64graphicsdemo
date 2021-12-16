@@ -18,9 +18,11 @@ u16 __attribute__((aligned(64))) zbuffer[SCREEN_HT * SCREEN_WD];
 
 u16* graphicsLayoutScreenBuffers(u16* memoryEnd) {
     gGraphicsTasks[0].framebuffer = memoryEnd - SCREEN_WD * SCREEN_HT;
-    gGraphicsTasks[1].framebuffer = gGraphicsTasks[0].framebuffer - SCREEN_WD * SCREEN_HT;
-
+    gGraphicsTasks[0].taskIndex = 0;
     gGraphicsTasks[0].msg.type = OS_SC_DONE_MSG;
+
+    gGraphicsTasks[1].framebuffer = gGraphicsTasks[0].framebuffer - SCREEN_WD * SCREEN_HT;
+    gGraphicsTasks[1].taskIndex = 1;
     gGraphicsTasks[1].msg.type = OS_SC_DONE_MSG;
 
     rdpOutput = (u64*)(gGraphicsTasks[1].framebuffer - RDP_OUTPUT_SIZE  / sizeof(u16));
