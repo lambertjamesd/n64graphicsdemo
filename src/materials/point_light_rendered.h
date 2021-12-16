@@ -3,6 +3,7 @@
 
 #include <ultra64.h>
 
+extern unsigned char __attribute__((aligned(8))) point_light_rendered_tex[];
 extern Gfx point_light_mat[];
 
 #endif

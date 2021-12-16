@@ -30,6 +30,8 @@ u16* graphicsLayoutScreenBuffers(u16* memoryEnd) {
     return (u16*)rdpOutput;
 }
 
+#define CLEAR_COLOR GPACK_RGBA5551(0x32, 0x5D, 0x79, 1)
+
 void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callback, void* data) {
     struct RenderState *renderState = &targetTask->renderState;
 
@@ -52,8 +54,8 @@ void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callba
 	
     gDPPipeSync(renderState->dl++);
     gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WD, osVirtualToPhysical(targetTask->framebuffer));
-    gDPSetFillColor(renderState->dl++, (GPACK_RGBA5551(0, 16, 32, 1) << 16 | 
-			       GPACK_RGBA5551(0, 16, 32, 1)));
+    gDPSetFillColor(renderState->dl++, (CLEAR_COLOR << 16 | 
+			       CLEAR_COLOR));
     gDPFillRectangle(renderState->dl++, 0, 0, SCREEN_WD-1, SCREEN_HT-1);
     gDPPipeSync(renderState->dl++);
     gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE); 

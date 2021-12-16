@@ -42,8 +42,8 @@ Lights2 static_light = gdSPDefLights2(
 );
 
 struct Coloru8 gAmbient = {32, 32, 32, 255};
-struct Coloru8 gGroundColor = {100, 150, 100, 255};
-struct Coloru8 gCasterColor = {32, 100, 200, 255};
+struct Coloru8 gGroundColor = {0x98, 0xD7, 0xD1, 255};
+struct Coloru8 gCasterColor = {0x32, 0x5D, 0x79, 255};
 
 void sceneInit(struct Scene* scene) {
     cameraInit(&scene->camera, 45.0f, SCENE_SCALE * 0.25f, SCENE_SCALE * 30.0f);
