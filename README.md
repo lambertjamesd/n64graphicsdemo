@@ -11,3 +11,5 @@ Next it draws the front faces of the shadow volume also fully transparent
 Last it redraws the subjects lit again
 
 ![Shadows](./images/Example.png)
+
+The shadows cast by Suzanne just renders her to an offscreen 64x64 8 bit buffer then projects it onto the ground.
