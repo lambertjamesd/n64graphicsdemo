@@ -8,20 +8,41 @@
 
 Light gLightBlack = {{{0, 0, 0}, 0, {0, 0, 0}, 0, {0, 0x7f, 0}, 0}};
 
+void pointLightRecalcMaxFactor(struct PointLight* pointLight) {
+    float result = 10000000.0f;
+    
+    if (pointLight->color.r) {
+        result = MIN(result, 255.0f / pointLight->color.r);
+    }
+
+    if (pointLight->color.g) {
+        result = MIN(result, 255.0f / pointLight->color.g);
+    }
+
+    if (pointLight->color.b) {
+        result = MIN(result, 255.0f / pointLight->color.b);
+    }
+
+    pointLight->maxFactor = result;
+}
+
 void pointLightInit(struct PointLight* pointLight, struct Vector3* position, struct Coloru8* color, float intensity) {
     pointLight->position = *position;
     pointLight->color = *color;
     pointLight->intensity = intensity;
+    pointLightRecalcMaxFactor(pointLight);
+}
+
+void pointLightSetColor(struct PointLight* pointLight, struct Coloru8* color) {
+    pointLight->color = *color;
+    pointLightRecalcMaxFactor(pointLight);
 }
 
 void pointLightAttenuate(struct PointLight* pointLight, float distnaceSq, struct Coloru8* output) {
     float factor = pointLight->intensity * (SCENE_SCALE * SCENE_SCALE) / distnaceSq;
 
-    if (factor > 1.0f) {
-        colorU8Lerp(&pointLight->color, &gColorWhite, factor, output);
-    } else {
-        colorU8Lerp(&gColorBlack, &pointLight->color, factor, output);
-    }
+    factor = MIN(factor, pointLight->maxFactor);
+    colorU8Lerp(&gColorBlack, &pointLight->color, factor, output);
 }
 
 void pointLightCalculateLight(struct PointLight* pointLight, struct Vector3* target, Light* output) {

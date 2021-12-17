@@ -14,6 +14,7 @@ struct Scene {
     struct PointLightableMesh groundMesh;
     struct PointLightableMesh casterMesh;
     struct ShadowMap shadowMap;
+    unsigned short currentLightColor;
 };
 
 struct GraphicsTask;

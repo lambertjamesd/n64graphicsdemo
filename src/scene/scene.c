@@ -20,7 +20,13 @@ struct Vector3 gLightPosition = {0.0f, SCENE_SCALE * 6.0f, 0.0f};
 float gCameraDistance = 0.0f;
 
 struct ShadowReceiver gRecieviers[] = {
-    {subject_mat, subject_mat, subject_model_gfx, ShadowReceiverFlagsUseLight},
+    {
+        subject_mat, 
+        subject_mat, 
+        subject_model_gfx, 
+        ShadowReceiverFlagsUseLight,
+        {{0, 0, 0}, {0, 0, 0, 1}, {1, 1, 1}},
+    },
 };
 
 struct Vector2 gSquareShadow[] = {
@@ -45,6 +51,13 @@ struct Coloru8 gAmbient = {32, 32, 32, 255};
 struct Coloru8 gGroundColor = {0x98, 0xD7, 0xD1, 255};
 struct Coloru8 gCasterColor = {0x32, 0x5D, 0x79, 255};
 
+struct Coloru8 gLightColors[] = {
+    {255, 255, 255, 255},
+    {255, 100, 90, 255},
+    {120, 255, 90, 255},
+    {80, 100, 255, 255},
+};
+
 void sceneInit(struct Scene* scene) {
     cameraInit(&scene->camera, 45.0f, SCENE_SCALE * 0.25f, SCENE_SCALE * 30.0f);
 
@@ -65,6 +78,8 @@ void sceneInit(struct Scene* scene) {
     struct Coloru8 groundShadowColor;
     colorU8Mul(&gAmbient, &gGroundColor, &groundShadowColor);
     shadowMapInit(&scene->shadowMap, subject_model_gfx, groundShadowColor);
+
+    scene->currentLightColor = 0;
 }
 
 void sceneRender(struct Scene* scene, struct RenderState* renderState, struct GraphicsTask* task) {
@@ -123,6 +138,8 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
     );
 }
 
+unsigned ignoreInputFrames = 10;
+
 void sceneUpdate(struct Scene* scene) {
     OSContPad* input = controllersGetControllerData(0);
 
@@ -136,11 +153,11 @@ void sceneUpdate(struct Scene* scene) {
     quatMultiply(&scene->camera.transform.rotation, &rotate, &finalRotation);
     scene->camera.transform.rotation = finalRotation;
 
-    if (controllerGetButton(0, A_BUTTON)) {
+    if (!ignoreInputFrames && controllerGetButton(0, A_BUTTON)) {
         gCameraDistance -= MOVE_PER_SECOND * gTimeDelta;
     }
 
-    if (controllerGetButton(0, B_BUTTON)) {
+    if (!ignoreInputFrames && controllerGetButton(0, B_BUTTON)) {
         gCameraDistance += MOVE_PER_SECOND * gTimeDelta;
     }
 
@@ -165,4 +182,16 @@ void sceneUpdate(struct Scene* scene) {
     gRecieviers[0].transform.position.y = gCameraFocus.y;
     gRecieviers[0].transform.position.z = gCameraFocus.z + SCENE_SCALE * 1.5f * cosf(gTimePassed * 0.33f);
     quatEulerAngles(&angles, &gRecieviers[0].transform.rotation);
+
+    struct Coloru8 finalColor;
+    colorU8Lerp(&scene->lightSource.color, &gLightColors[scene->currentLightColor], 0.05f, &finalColor);
+    pointLightSetColor(&scene->lightSource, &finalColor);
+
+    if (!ignoreInputFrames && controllerGetButtonDown(0, Z_TRIG)) {
+        scene->currentLightColor = (scene->currentLightColor + 1) % (sizeof(gLightColors) / sizeof(*gLightColors));
+    }
+
+    if (ignoreInputFrames) {
+        --ignoreInputFrames;
+    }
 }

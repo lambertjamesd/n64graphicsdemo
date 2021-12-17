@@ -12,6 +12,7 @@ struct PointLight {
     struct Vector3 position;
     struct Coloru8 color;
     float intensity;
+    float maxFactor;
 };
 
 struct PointLightableMesh {
@@ -29,6 +30,7 @@ extern Light gLightBlack;
 
 void pointLightInit(struct PointLight* pointLight, struct Vector3* position, struct Coloru8* color, float intensity);
 void pointLightCalculateLight(struct PointLight* pointLight, struct Vector3* target, Light* output);
+void pointLightSetColor(struct PointLight* pointLight, struct Coloru8* color);
 
 void pointLightableSetMaterial(struct PointLightableMesh* mesh, struct RenderState* renderState, struct Coloru8* ambient);
 void pointLightableSetMaterialInShadow(struct PointLightableMesh* mesh, struct RenderState* renderState, struct Coloru8* ambient);
