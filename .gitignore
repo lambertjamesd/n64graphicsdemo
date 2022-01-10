@@ -1,9 +1,9 @@
 *.o
 .vscode/
-simple_cp.ld
 *.elf
 *.map
 *.z64
-build/
-debugger
-assets/
+
+realtimeshadows/build/
+realtimeshadows/debugger
+realtimeshadows/assets/
