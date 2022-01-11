@@ -17,17 +17,20 @@ u32 firsttime = 1;
 u16 __attribute__((aligned(64))) zbuffer[SCREEN_HT * SCREEN_WD];
 
 u16* graphicsLayoutScreenBuffers(u16* memoryEnd) {
-    gGraphicsTasks[0].framebuffer = memoryEnd - SCREEN_WD * SCREEN_HT;
+    memoryEnd -= SCREEN_WD * SCREEN_HT;
+    gGraphicsTasks[0].framebuffer = memoryEnd;
     gGraphicsTasks[0].taskIndex = 0;
     gGraphicsTasks[0].msg.type = OS_SC_DONE_MSG;
 
-    gGraphicsTasks[1].framebuffer = gGraphicsTasks[0].framebuffer - SCREEN_WD * SCREEN_HT;
+    memoryEnd -= SCREEN_WD * SCREEN_HT;
+    gGraphicsTasks[1].framebuffer = memoryEnd;
     gGraphicsTasks[1].taskIndex = 1;
     gGraphicsTasks[1].msg.type = OS_SC_DONE_MSG;
 
-    rdpOutput = (u64*)(gGraphicsTasks[1].framebuffer - RDP_OUTPUT_SIZE  / sizeof(u16));
+    memoryEnd -= RDP_OUTPUT_SIZE  / sizeof(u16);
+    rdpOutput = (u64*)memoryEnd;
     zeroMemory(rdpOutput, RDP_OUTPUT_SIZE);
-    return (u16*)rdpOutput;
+    return memoryEnd;
 }
 
 #define CLEAR_COLOR GPACK_RGBA5551(0x32, 0x5D, 0x79, 1)
@@ -69,8 +72,6 @@ void graphicsCreateTask(struct GraphicsTask* targetTask, GraphicsCallback callba
     gSPEndDisplayList(renderState->dl++);
 
     renderStateFlushCache(renderState);
-
-
 
     OSScTask *scTask = &targetTask->task;
 
