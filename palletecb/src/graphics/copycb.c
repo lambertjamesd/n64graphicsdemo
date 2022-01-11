@@ -29,6 +29,34 @@ u8 __attribute__((aligned(64))) indexColorBuffer[SCREEN_HT * SCREEN_WD];
 
 #define UNLIT_TEXTURE   0, 0, 0, TEXEL0, 0, 0, 0, ENVIRONMENT
 
+#define COPY_IMAGE_TILE(x, y, w, h)                             \
+    gsDPLoadTextureTile(                                        \
+        SOURCE_CB,                                              \
+        G_IM_FMT_CI, G_IM_SIZ_8b,                               \
+        SCREEN_WD, SCREEN_HT,                                   \
+        (x), (y), (x) + (w) - 1, (y) + (h) - 1,                 \
+        0,                                                      \
+        G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, \
+        G_TX_NOMASK, G_TX_NOMASK,                               \
+        G_TX_NOLOD, G_TX_NOLOD                                  \
+    ),                                                          \
+    gsSPTextureRectangle(                                       \
+        (x) << 2, (y) << 2,                                     \
+        ((x) + (w)) << 2, ((y) + (h)) << 2,                     \
+        G_TX_RENDERTILE,                                        \
+        (x) << 5, (y) << 5,                                     \
+        1 << 10, 1 << 10                                        \
+    )
+
+#define COPY_HALF_IMAGE_ROW(x, y, w, h)                         \
+    COPY_IMAGE_TILE((x) + 0, y, w, h),                          \
+    COPY_IMAGE_TILE((x) + 64, y, w, h),                         \
+    COPY_IMAGE_TILE((x) + 128, y, w, h),                        \
+    COPY_IMAGE_TILE((x) + 192, y, w, h),                        \
+    COPY_IMAGE_TILE((x) + 256, y, w, h)
+
+#define COPY_FULL_IMAGE_ROW(y, w, h)    COPY_HALF_IMAGE_ROW(0, y, w, h), COPY_HALF_IMAGE_ROW(320, y, w, h)
+
 Gfx gCopyCB[] = {
     gsDPPipeSync(),
     gsDPLoadTLUT_pal256(gPallete),
@@ -39,28 +67,25 @@ Gfx gCopyCB[] = {
     gsDPSetRenderMode(G_RM_OPA_SURF, G_RM_OPA_SURF2),
     gsDPSetTexturePersp(G_TP_NONE),
     gsDPSetEnvColor(255, 255, 255, 255),
-
     gsSPClearGeometryMode(G_ZBUFFER),
-
     gsSPTexture(0xffff, 0xffff, 0, G_TX_RENDERTILE, G_ON),
 
-    gsDPLoadTextureTile(
-        SOURCE_CB,
-        G_IM_FMT_CI, G_IM_SIZ_8b,
-        64, 32,
-        0, 0, 63, 31,
-        0,
-        G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP,
-        G_TX_NOMASK, G_TX_NOMASK,
-        G_TX_NOLOD, G_TX_NOLOD
-    ),
 
-    gsSPTextureRectangle(
-        0, 0,
-        64 << 2, 32 << 2,
-        G_TX_RENDERTILE,
-        0, 0,
-        1 << 10, 1 << 10
-    ),
+    COPY_FULL_IMAGE_ROW(0, 64, 32),
+    COPY_FULL_IMAGE_ROW(32, 64, 32),
+    COPY_FULL_IMAGE_ROW(64, 64, 32),
+    COPY_FULL_IMAGE_ROW(96, 64, 32),
+    COPY_FULL_IMAGE_ROW(128, 64, 32),
+    COPY_FULL_IMAGE_ROW(160, 64, 32),
+    COPY_FULL_IMAGE_ROW(192, 64, 32),
+    COPY_FULL_IMAGE_ROW(224, 64, 32),
+    COPY_FULL_IMAGE_ROW(256, 64, 32),
+    COPY_FULL_IMAGE_ROW(288, 64, 32),
+    COPY_FULL_IMAGE_ROW(320, 64, 32),
+    COPY_FULL_IMAGE_ROW(352, 64, 32),
+    COPY_FULL_IMAGE_ROW(384, 64, 32),
+    COPY_FULL_IMAGE_ROW(416, 64, 32),
+    COPY_FULL_IMAGE_ROW(448, 64, 32),
+    
     gsSPEndDisplayList(),
 };
