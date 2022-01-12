@@ -74,17 +74,17 @@ build/%.o: %.s
 ## Assets
 ####################
 
-src/models/shadow_caster.h src/models/shadow_caster_geo.inc.h: assets/fbx/ShadowCaster.fbx
-	skeletool64 -s 100 -r 0,0,0 -n shadow_caster -o src/models/shadow_caster.h assets/fbx/ShadowCaster.fbx
+src/models/cylinder.h src/models/cylinder_geo.inc.h: assets/Cylinder.fbx
+	skeletool64 -s 100 -r 0,0,0 -n cylinder -o src/models/cylinder.h assets/Cylinder.fbx
 
-src/models/ground.h src/models/ground_geo.inc.h: assets/fbx/Ground.fbx
-	skeletool64 -s 100 -r 0,0,0 -n ground -o src/models/ground.h assets/fbx/Ground.fbx
+src/models/sphere.h src/models/sphere_geo.inc.h: assets/Sphere.fbx
+	skeletool64 -s 100 -r 0,0,0 -n sphere -o src/models/sphere.h assets/Sphere.fbx
 
-src/models/subject.h src/models/subject_geo.inc.h: assets/fbx/Subject.fbx
-	skeletool64 -s 100 -r 0,0,0 -n subject -o src/models/subject.h assets/fbx/Subject.fbx
+src/models/suzanne.h src/models/suzanne_geo.inc.h: assets/Suzanne.fbx
+	skeletool64 -s 100 -r 0,0,0 -n suzanne -o src/models/suzanne.h assets/Suzanne.fbx
 
-src/models/sphere.h src/models/sphere_geo.inc.h: assets/fbx/Sphere.fbx
-	skeletool64 -s 100 -r 0,0,0 -n sphere -o src/models/sphere.h assets/fbx/Sphere.fbx
+src/models/ground.h src/models/ground_geo.inc.h: assets/Ground.fbx
+	skeletool64 -s 100 -r 0,0,0 -n ground -o src/models/ground.h assets/Ground.fbx
 
 ####################
 ## Linking

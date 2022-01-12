@@ -4,8 +4,10 @@
 #include "../graphics/renderstate.h"
 #include "../graphics/graphics.h"
 
-struct Scene {
+#include "camera.h"
 
+struct Scene {
+    struct Camera camera;
 };
 
 void sceneInit(struct Scene* scene);
