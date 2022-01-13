@@ -1,4 +1,4 @@
-Vtx ground_Plane_normal[] = {
+Vtx ground_model_vtx[] = {
     {{{500, 0, -500}, 0, {2048, 2048}, {0, 127, 0, 255}}},
     {{{-500, 0, -500}, 0, {0, 2048}, {0, 127, 0, 255}}},
     {{{-500, 0, 500}, 0, {0, 0}, {0, 127, 0, 255}}},
@@ -9,7 +9,7 @@ Vtx ground_Plane_normal[] = {
 Gfx ground_model_gfx[] = {
     // Material DefaultMaterial
     // End Material DefaultMaterial
-    gsSPVertex(&ground_Plane_normal[0], 4, 0),
+    gsSPVertex(&ground_model_vtx[0], 4, 0),
     gsSP2Triangles(0, 1, 2, 0, 0, 2, 3, 0),
     gsSPEndDisplayList(),
 };

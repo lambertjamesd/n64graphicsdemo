@@ -54,7 +54,7 @@ Gfx rdpstateinit_dl[] = {
     gsDPSetTileSize(7, 0, 0, (1 - 1) << G_TEXTURE_IMAGE_FRAC, (1 - 1) <<
 		G_TEXTURE_IMAGE_FRAC),
 
-		gsDPSetColorDither(G_CD_BAYER),
+		gsDPSetColorDither(G_CD_DISABLE),
 
     gsDPPipeSync(),
     gsSPEndDisplayList(),
@@ -65,7 +65,7 @@ Gfx rdpstateinit_dl[] = {
 Gfx setup_rdpstate[] = {
     gsDPSetRenderMode(G_RM_OPA_SURF, G_RM_OPA_SURF2),
     gsDPSetScissor(G_SC_NON_INTERLACE, 0, 0, SCREEN_WD, SCREEN_HT),
-    gsDPSetColorDither(G_CD_BAYER),
+    gsDPSetColorDither(G_CD_DISABLE),
     gsDPSetTexturePersp(G_TP_PERSP),
 
     gsSPEndDisplayList(),
