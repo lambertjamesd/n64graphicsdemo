@@ -14,5 +14,7 @@ extern u64 gFirePallete[];
 extern u64 gToonPallete[];
 extern u64 gIcePallete[];
 extern u64 gYesWeCan[];
+extern u64 gHeat[];
+extern u64 gRainbow[];
 
 #endif

@@ -72,6 +72,8 @@ void materialYesWeCanGround(struct RenderState* renderState, int objectIndex) {
 struct RenderModeData gRenderModeData[] = {
     {RenderModeFlagsAttenuate, gFirePallete, 0x08080808, materialSetBasicLit, 0, 0},
     {RenderModeFlagsAttenuate, gIcePallete, 0x08080808, materialSetBasicLit, 0, 0},
+    {RenderModeFlagsAttenuate, gHeat, 0x08080808, materialSetBasicLit, 0, 0},
+    {RenderModeFlagsAttenuate, gRainbow, 0x08080808, materialSetBasicLit, 0, 0},
     {0, gToonPallete, 0x00000000, materialSetToon, materialSetOutline, materialToonGround},
     {0, gYesWeCan, 0x00000000, materialYesWeCan, materialSetOutline, materialYesWeCanGround},
 };
@@ -88,7 +90,7 @@ void sceneInit(struct Scene* scene) {
 
     scene->renderMode = RenderModeFire;
 
-    pointLightInit(&scene->pointLight, &gLightOrbitCenter, &gColorWhite, 10.0f);
+    pointLightInit(&scene->pointLight, &gLightOrbitCenter, &gColorWhite, 15.0f);
     pointLightableMeshInit(&scene->ground, ground_model_vtx, ground_model_gfx, &gColorWhite);
     struct Transform transform;
     transformInitIdentity(&transform);
