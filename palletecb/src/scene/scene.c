@@ -88,7 +88,7 @@ void sceneInit(struct Scene* scene) {
     vector3Sub(&gCameraFocus, &gCameraStart, &offset);
     quatLook(&offset, &gUp, &scene->camera.transform.rotation);
 
-    scene->renderMode = RenderModeFire;
+    scene->renderMode = RenderModeToon;
 
     pointLightInit(&scene->pointLight, &gLightOrbitCenter, &gColorWhite, 15.0f);
     pointLightableMeshInit(&scene->ground, ground_model_vtx, ground_model_gfx, &gColorWhite);
