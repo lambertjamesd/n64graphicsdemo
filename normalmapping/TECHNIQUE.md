@@ -16,17 +16,14 @@ PRIMTIVE = (128, 128, 128, 255)
 (COMBINED - 0) * COLOR_TEXEL + 0
 ```
 
-Once that is setup, the trick to getting normal mapping working is doing 6 different passes when rendering the intensity color buffer, 2 for each axis.
+Once that is setup, the trick to getting normal mapping working is doing 5 different passes when rendering the intensity color buffer, 2 for x and y axis, 1 for the z axis.
 
-Each pass will use a different normal for the geometry and each axis will use a different texture. The passes are combined using additive blending.
+Each pass will use a different normal for the geometry and each axis will use a different texture. The first pass can write directly to the color buffer, additional passes are combined using additive blending.
 
 | pass | normal direction | texture      | color combine                 |
 |------|------------------|--------------|-------------------------------|
-| +x   | tangent0         | normal map r | (TEXEL0 - 42) * SHADE         |
-| -x   | -tangent0        | normal map r | (42 - TEXEL0) * SHADE         |
-| +y   | tangent1         | normal map g | (TEXEL0 - 42) * SHADE         |
-| -y   | -tangent1        | normal map g | (42 - TEXEL0) * SHADE         |
-| +z   | normal           | normal map b | (TEXEL0 - 42) * SHADE         |
-| -z   | -normal          | normal map b | (42 - TEXEL0) * SHADE         |
-
-Any constant values in the color combiner can be configured using the evironment color.
+| +x   | tangent0         | normal map r | TEXEL0 * SHADE                |
+| -x   | -tangent0        | normal map r | (1 - TEXEL0) * SHADE          |
+| +y   | tangent1         | normal map g | TEXEL0 * SHADE                |
+| -y   | -tangent1        | normal map g | (1 - TEXEL0) * SHADE          |
+| +z   | normal           | normal map b | TEXEL0 * SHADE                |
