@@ -3,18 +3,19 @@
 
 #include <ultra64.h>
 
-#define SOURCE_CB_SEGMENT   0x8
+#define SOURCE_CB_SEGMENT       0x8
+#define SOURCE_COLOR_SEGMENT    0x9
 
-#define SOURCE_CB   ((SOURCE_CB_SEGMENT) << 24)
+#define SOURCE_CB       ((SOURCE_CB_SEGMENT) << 24)
+#define SOURCE_COLOR    ((SOURCE_COLOR_SEGMENT) << 24)
 
 extern Gfx gCopyCB[];
+extern Gfx gAdjustBrightnessRange[];
 extern u8 __attribute__((aligned(64))) indexColorBuffer[];
+extern u8 __attribute__((aligned(64))) lightnessBuffer[];
 
-extern u64 gFirePallete[];
-extern u64 gToonPallete[];
-extern u64 gIcePallete[];
-extern u64 gYesWeCan[];
-extern u64 gHeat[];
-extern u64 gRainbow[];
+extern u16 __attribute__((aligned(64))) colorBuffer[];
+
+extern u64 gPalleteMapping[];
 
 #endif

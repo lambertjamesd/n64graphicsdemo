@@ -8,12 +8,7 @@
 #include "camera.h"
 
 enum RenderMode {
-    RenderModeFire,
-    RenderModeIce,
-    RenderModeHeat,
     RenderModeRainbow,
-    RenderModeToon,
-    RenderModeYesWeCan,
     RenderModeCount,
 };
 

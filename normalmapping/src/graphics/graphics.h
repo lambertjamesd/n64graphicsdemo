@@ -5,8 +5,8 @@
 #include <sched.h>
 #include "renderstate.h"
 
-#define SCREEN_WD   640
-#define SCREEN_HT   480
+#define SCREEN_WD   320
+#define SCREEN_HT   240
 
 struct GraphicsTask {
     struct RenderState renderState;

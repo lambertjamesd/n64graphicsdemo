@@ -87,13 +87,13 @@ void gameProc(void *arg) {
 
 	switch (osTvType) {
 		case 0: // PAL
-			schedulerMode = OS_VI_PAL_HPF1;
+			schedulerMode = OS_VI_PAL_LPF1;
 			break;
 		case 1: // NTSC
-			schedulerMode = OS_VI_NTSC_HPF1;
+			schedulerMode = OS_VI_NTSC_LPF1;
 			break;
 		case 2: // MPAL
-            schedulerMode = OS_VI_MPAL_HPF1;
+            schedulerMode = OS_VI_MPAL_LPF1;
 			break;
 	}
 

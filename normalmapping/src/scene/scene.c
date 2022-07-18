@@ -45,37 +45,10 @@ void materialSetBasicLit(struct RenderState* renderState, int objectIndex) {
     gSPDisplayList(renderState->dl++, gBasicLitMaterial);
 }
 
-void materialSetToon(struct RenderState* renderState, int objectIndex) {
-    toonLitUse(renderState, 5 + 4 * objectIndex, 2);
-}
-
-void materialYesWeCan(struct RenderState* renderState, int objectIndex) {
-    toonLitUse(renderState, 64, 128);
-}
-
-void materialSetOutline(struct RenderState* renderState, int objectIndex) {
-    gSPDisplayList(renderState->dl++, gOutlinePass);
-}
-
 #define GROUND_LERP  TEXEL0, 0, ENVIRONMENT, PRIMITIVE, 0, 0, 0, ENVIRONMENT
 
-void materialToonGround(struct RenderState* renderState, int objectIndex) {
-    toonLitUse(renderState, 5 + 4 * OBJECT_COUNT, 2);
-    gDPSetCombineMode(renderState->dl++, GROUND_LERP, GROUND_LERP);
-}
-
-void materialYesWeCanGround(struct RenderState* renderState, int objectIndex) {
-    toonLitUse(renderState, 64, 128);
-    gDPSetCombineMode(renderState->dl++, GROUND_LERP, GROUND_LERP);
-}
-
 struct RenderModeData gRenderModeData[] = {
-    {RenderModeFlagsAttenuate, gFirePallete, 0x08080808, materialSetBasicLit, 0, 0},
-    {RenderModeFlagsAttenuate, gIcePallete, 0x08080808, materialSetBasicLit, 0, 0},
-    {RenderModeFlagsAttenuate, gHeat, 0x08080808, materialSetBasicLit, 0, 0},
-    {RenderModeFlagsAttenuate, gRainbow, 0x08080808, materialSetBasicLit, 0, 0},
-    {0, gToonPallete, 0x00000000, materialSetToon, materialSetOutline, materialToonGround},
-    {0, gYesWeCan, 0x00000000, materialYesWeCan, materialSetOutline, materialYesWeCanGround},
+    {RenderModeFlagsAttenuate, gPalleteMapping, 0x08080808, materialSetBasicLit, 0, 0},
 };
 
 void sceneInit(struct Scene* scene) {
@@ -88,7 +61,7 @@ void sceneInit(struct Scene* scene) {
     vector3Sub(&gCameraFocus, &gCameraStart, &offset);
     quatLook(&offset, &gUp, &scene->camera.transform.rotation);
 
-    scene->renderMode = RenderModeToon;
+    scene->renderMode = RenderModeRainbow;
 
     pointLightInit(&scene->pointLight, &gLightOrbitCenter, &gColorWhite, 15.0f);
     pointLightableMeshInit(&scene->ground, ground_model_vtx, ground_model_gfx, &gColorWhite);
@@ -184,8 +157,14 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
     struct RenderModeData* renderMode = &gRenderModeData[scene->renderMode];
 
     gDPPipeSync(renderState->dl++);
-    gDPSetColorImage(renderState->dl++, G_IM_FMT_CI, G_IM_SIZ_8b, SCREEN_WD, indexColorBuffer);
     gDPSetCycleType(renderState->dl++, G_CYC_FILL);
+
+    gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WD, colorBuffer);
+    gDPSetFillColor(renderState->dl++, (GPACK_RGBA5551(32, 200, 128, 1) << 16) | GPACK_RGBA5551(32, 200, 128, 1));
+    gDPFillRectangle(renderState->dl++, 0, 0, SCREEN_WD-1, SCREEN_HT-1);
+    gDPPipeSync(renderState->dl++);
+
+    gDPSetColorImage(renderState->dl++, G_IM_FMT_CI, G_IM_SIZ_8b, SCREEN_WD, indexColorBuffer);
     gDPSetFillColor(renderState->dl++, gRenderModeData[scene->renderMode].clearColor);
     gDPFillRectangle(renderState->dl++, 0, 0, SCREEN_WD-1, SCREEN_HT-1);
     gDPPipeSync(renderState->dl++);
@@ -233,8 +212,15 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
 
     gDPPipeSync(renderState->dl++);
     gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE);
-    gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WD, osVirtualToPhysical(task->framebuffer));
+    
+    gDPSetColorImage(renderState->dl++, G_IM_FMT_I, G_IM_SIZ_8b, SCREEN_WD, osVirtualToPhysical(lightnessBuffer));
     gSPSegment(renderState->dl++, SOURCE_CB_SEGMENT, indexColorBuffer);
+    gSPDisplayList(renderState->dl++, gAdjustBrightnessRange);
+
+    gDPPipeSync(renderState->dl++);
+    gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WD, osVirtualToPhysical(task->framebuffer));
+    gSPSegment(renderState->dl++, SOURCE_CB_SEGMENT, lightnessBuffer);
+    gSPSegment(renderState->dl++, SOURCE_COLOR_SEGMENT, colorBuffer);
 
     gDPLoadTLUT_pal256(renderState->dl++, gRenderModeData[scene->renderMode].pallete);
 
