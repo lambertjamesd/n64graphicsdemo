@@ -222,7 +222,5 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
     gSPSegment(renderState->dl++, SOURCE_CB_SEGMENT, lightnessBuffer);
     gSPSegment(renderState->dl++, SOURCE_COLOR_SEGMENT, colorBuffer);
 
-    gDPLoadTLUT_pal256(renderState->dl++, gRenderModeData[scene->renderMode].pallete);
-
-    gSPDisplayList(renderState->dl++, gCopyCB);
+    gSPDisplayList(renderState->dl++, gCombineBuffers);
 }

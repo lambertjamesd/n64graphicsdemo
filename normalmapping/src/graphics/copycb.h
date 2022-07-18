@@ -9,7 +9,7 @@
 #define SOURCE_CB       ((SOURCE_CB_SEGMENT) << 24)
 #define SOURCE_COLOR    ((SOURCE_COLOR_SEGMENT) << 24)
 
-extern Gfx gCopyCB[];
+extern Gfx gCombineBuffers[];
 extern Gfx gAdjustBrightnessRange[];
 extern u8 __attribute__((aligned(64))) indexColorBuffer[];
 extern u8 __attribute__((aligned(64))) lightnessBuffer[];

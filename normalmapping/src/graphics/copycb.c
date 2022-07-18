@@ -33,8 +33,6 @@ u8 __attribute__((aligned(64))) lightnessBuffer[SCREEN_HT * SCREEN_WD];
 
 u16 __attribute__((aligned(64))) colorBuffer[SCREEN_HT * SCREEN_WD];
 
-#define UNLIT_TEXTURE   1, 0, ENVIRONMENT, TEXEL0, 0, 0, 0, ENVIRONMENT
-
 #define COPY_IMAGE_TILE(x, y, w, h, imfmt)                      \
     gsDPLoadTextureTile(                                        \
         SOURCE_CB,                                              \
@@ -61,35 +59,85 @@ u16 __attribute__((aligned(64))) colorBuffer[SCREEN_HT * SCREEN_WD];
     COPY_IMAGE_TILE((x) + 192, y, w, h, imfmt),                 \
     COPY_IMAGE_TILE((x) + 256, y, w, h, imfmt)
 
-#define COPY_FULL_IMAGE_ROW(y, w, h, imfmt)    COPY_HALF_IMAGE_ROW(0, y, w, h, imfmt), COPY_HALF_IMAGE_ROW(320, y, w, h, imfmt)
+#define COPY_FULL_IMAGE_ROW(y, w, h, imfmt)    COPY_HALF_IMAGE_ROW(0, y, w, h, imfmt)
 
-Gfx gCopyCB[] = {
+
+#define COMBINE_IMAGE_TILE(x, y, w, h)                          \
+    gsDPLoadMultiTile(                                          \
+        SOURCE_COLOR,                                           \
+        0,                                                      \
+        G_TX_RENDERTILE + 0,                                    \
+        G_IM_FMT_RGBA, G_IM_SIZ_16b,                            \
+        SCREEN_WD, SCREEN_HT,                                   \
+        (x), (y), (x) + (w) - 1, (y) + (h) - 1,                 \
+        0,                                                      \
+        G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, \
+        G_TX_NOMASK, G_TX_NOMASK,                               \
+        G_TX_NOLOD, G_TX_NOLOD                                  \
+    ),                                                          \
+    gsDPLoadMultiTile(                                          \
+        SOURCE_CB,                                              \
+        256,                                                    \
+        G_TX_RENDERTILE + 1,                                    \
+        G_IM_FMT_I, G_IM_SIZ_8b,                                \
+        SCREEN_WD, SCREEN_HT,                                   \
+        (x), (y), (x) + (w) - 1, (y) + (h) - 1,                 \
+        0,                                                      \
+        G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, \
+        G_TX_NOMASK, G_TX_NOMASK,                               \
+        G_TX_NOLOD, G_TX_NOLOD                                  \
+    ),                                                          \
+    gsSPTextureRectangle(                                       \
+        (x) << 2, (y) << 2,                                     \
+        ((x) + (w)) << 2, ((y) + (h)) << 2,                     \
+        G_TX_RENDERTILE,                                        \
+        (x) << 5, (y) << 5,                                     \
+        1 << 10, 1 << 10                                        \
+    )
+
+#define COMBINE_HALF_IMAGE_ROW(x, y, w, h)                      \
+    COMBINE_IMAGE_TILE((x) + 0, y, w, h),                       \
+    COMBINE_IMAGE_TILE((x) + 64, y, w, h),                      \
+    COMBINE_IMAGE_TILE((x) + 128, y, w, h),                     \
+    COMBINE_IMAGE_TILE((x) + 192, y, w, h),                     \
+    COMBINE_IMAGE_TILE((x) + 256, y, w, h)
+
+#define COMBINE_FULL_IMAGE_ROW(y, w, h)    COMBINE_HALF_IMAGE_ROW(0, y, w, h)
+
+#define LOAD_TEXTURE_COLOR       1, 0, TEXEL1, TEXEL1, 0, 0, 0, ENVIRONMENT
+#define MULTIPLY_OTHER_TEXTURE   COMBINED, 0, TEXEL1, 0, 0, 0, 0, ENVIRONMENT
+
+Gfx gCombineBuffers[] = {
     gsDPPipeSync(),
-    gsDPSetCombineMode(UNLIT_TEXTURE, UNLIT_TEXTURE),
+    gsDPSetCycleType(G_CYC_2CYCLE),
+    gsDPSetCombineMode(LOAD_TEXTURE_COLOR, MULTIPLY_OTHER_TEXTURE),
     gsDPSetTextureLUT(G_TT_NONE),
     gsDPSetTextureFilter(G_TF_POINT),
-    gsDPSetRenderMode(G_RM_OPA_SURF, G_RM_OPA_SURF2),
+    gsDPSetRenderMode(G_RM_PASS, G_RM_OPA_SURF2),
     gsDPSetTexturePersp(G_TP_NONE),
-    gsDPSetEnvColor(128, 128, 128, 255),
+    gsDPSetEnvColor(64, 64, 64, 255),
     gsSPClearGeometryMode(G_ZBUFFER),
     gsSPTexture(0xffff, 0xffff, 0, G_TX_RENDERTILE, G_ON),
 
 
-    COPY_FULL_IMAGE_ROW(0, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(32, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(64, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(96, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(128, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(160, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(192, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(224, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(256, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(288, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(320, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(352, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(384, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(416, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(448, 64, 32, G_IM_FMT_I),
+    COMBINE_FULL_IMAGE_ROW(0, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(16, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(32, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(48, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(64, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(80, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(96, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(112, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(128, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(144, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(160, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(176, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(192, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(208, 64, 16),
+    COMBINE_FULL_IMAGE_ROW(224, 64, 32),
+
+    gsDPPipeSync(),
+    gsDPSetCycleType(G_CYC_1CYCLE),
     
     gsSPEndDisplayList(),
 };
@@ -117,13 +165,6 @@ Gfx gAdjustBrightnessRange[] = {
     COPY_FULL_IMAGE_ROW(160, 64, 32, G_IM_FMT_I),
     COPY_FULL_IMAGE_ROW(192, 64, 32, G_IM_FMT_I),
     COPY_FULL_IMAGE_ROW(224, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(256, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(288, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(320, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(352, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(384, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(416, 64, 32, G_IM_FMT_I),
-    COPY_FULL_IMAGE_ROW(448, 64, 32, G_IM_FMT_I),
     
     gsSPEndDisplayList(),
 };
