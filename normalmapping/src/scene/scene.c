@@ -22,20 +22,6 @@ struct Vector3 gCameraFocus = {0.0f, SCENE_SCALE, 0.0f};
 struct Vector3 gCameraStart = {SCENE_SCALE * -2.0f, SCENE_SCALE * 5.0f, SCENE_SCALE * 5.0f};
 float gCameraDistance = 0.0f;
 
-#define OBJECT_COUNT    3
-
-struct Transform gObjectPos[OBJECT_COUNT] = {
-    {{-1.5f * SCENE_SCALE, SCENE_SCALE, -2.5f * SCENE_SCALE}, {0.707f, 0.0f, 0.0f, 0.707f}, {1.0f, 1.0f, 1.0f}},
-    {{2.5f * SCENE_SCALE, SCENE_SCALE, -2.0f * SCENE_SCALE}, {0.707f, 0.0f, 0.0f, 0.707f}, {1.0f, 1.0f, 1.0f}},
-    {{0.0f * SCENE_SCALE, SCENE_SCALE * 0.75f, 1.5f * SCENE_SCALE}, {-0.923879533f, 0.0f, 0.0f, 0.382683432f}, {1.0f, 1.0f, 1.0f}},
-};
-
-Gfx* gObjectGfx[OBJECT_COUNT] = {
-    sphere_model_gfx,
-    cylinder_model_gfx,
-    suzanne_model_gfx,
-};
-
 struct Vector3 gLightOrbitCenter = {0.0f, SCENE_SCALE * 5.0f, 0.0f};
 
 #define LIGHT_ORBIT_RADIUS  (5.0f * SCENE_SCALE)
@@ -64,10 +50,6 @@ void sceneInit(struct Scene* scene) {
     scene->renderMode = RenderModeRainbow;
 
     pointLightInit(&scene->pointLight, &gLightOrbitCenter, &gColorWhite, 15.0f);
-    pointLightableMeshInit(&scene->ground, ground_model_vtx, ground_model_gfx, &gColorWhite);
-    struct Transform transform;
-    transformInitIdentity(&transform);
-    pointLightableCalc(&scene->ground, &transform, &scene->pointLight);
 }
 
 unsigned ignoreInputFrames = 10;
@@ -118,10 +100,6 @@ void sceneUpdate(struct Scene* scene) {
     scene->pointLight.position.y = cosf(angle * 3.0f) * SCENE_SCALE + gLightOrbitCenter.y;
     scene->pointLight.position.z = sinf(angle) * LIGHT_ORBIT_RADIUS + gLightOrbitCenter.z;
 
-    struct Transform transform;
-    transformInitIdentity(&transform);
-    pointLightableCalc(&scene->ground, &transform, &scene->pointLight);
-
     if (ignoreInputFrames) {
         --ignoreInputFrames;
     }
@@ -154,8 +132,6 @@ void sceneRenderObject(struct Scene* scene, struct RenderState* renderState, str
 }
 
 void sceneRender(struct Scene* scene, struct RenderState* renderState, struct GraphicsTask* task) {
-    struct RenderModeData* renderMode = &gRenderModeData[scene->renderMode];
-
     gDPPipeSync(renderState->dl++);
     gDPSetCycleType(renderState->dl++, G_CYC_FILL);
 
@@ -175,29 +151,11 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
     
     gSPSetLights1(renderState->dl++, gLights);
 
-    for (unsigned i = 0; i < OBJECT_COUNT; ++i) {
-        sceneRenderObject(
-            scene, 
-            renderState, 
-            renderMode, 
-            gObjectGfx[i], 
-            &gObjectPos[i], 
-            i
-        );
-    }
-
     gSPGeometryMode(renderState->dl++, G_CULL_FRONT, G_CULL_BACK);
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
 
     struct Transform transform;
     transformInitIdentity(&transform);
-
-    gSPDisplayList(renderState->dl++, point_light_mat);
-    pointLightableSetMaterial(&scene->ground, renderState, &gColorBlack);
-    if (renderMode->groundMaterial) {
-        renderMode->groundMaterial(renderState, 0);
-    }
-    gSPDisplayList(renderState->dl++, scene->ground.drawCommand);
 
     Mtx* lightMtx = renderStateRequestMatrices(renderState, 1);
     transform.position = scene->pointLight.position;

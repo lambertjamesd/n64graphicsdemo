@@ -86,33 +86,34 @@ build/assets/brick_normal_z.png: assets/brick_normals.png
 	@mkdir -p $(@D)
 	convert assets/brick_normals.png -channel b -separate build/assets/brick_normal_z.png
 
+DERIVED_IMAGES = build/assets/brick_normal_x.png build/assets/brick_normal_y.png build/assets/brick_normal_z.png
+
 build/assets/materials.h: assets/materials.skm.yaml \
-	build/assets/brick_normal_x.png build/assets/brick_normal_y.png build/assets/brick_normal_z.png \
+	$(DERIVED_IMAGES) \
 	assets/brick_texture.png
 	@mkdir -p $(@D)
 	$(SKELETOOL64) --name materials -m assets/materials.skm.yaml --material-output -o build/assets/materials.h
 
 
-build/assets/brick_model_color.h: assets/brick_model.fbx assets/materials.skm.yaml 
-	@mkdir -p $(@D) 
-	$(SKELETOOL64) --name model_color \
-		--fixed-point-scale 256 --model-scale 0.01 \
-		-m assets/materials.skm.yaml --default-material cube_color --force-material cube_color \
-		-o build/assets/brick_model_color.h assets/brick_model.fbx
+MESH_LIST = brick_color brick_normal brick_tangent brick_bitangent brick_ntangent brick_nbitangent
 
-build/assets/brick_model_normal.h: assets/brick_model.fbx assets/materials.skm.yaml 
-	@mkdir -p $(@D) 
-	$(SKELETOOL64) --name model_normal \
-		--fixed-point-scale 256 --model-scale 0.01 \
-		-m assets/materials.skm.yaml --default-material cube_normal --force-material cube_normal \
-		-o build/assets/brick_model_normal.h assets/brick_model.fbx
+MESH_HEADERS = $(MESH_LIST:%=build/assets/%.h)
+MESH_SOURCE = $(MESH_LIST:%=build/assets/%_geo.c)
+MESH_OBJECTS = $(MESH_LIST:%=build/assets/%_geo.o)
 
-build/assets/brick_model_tangent.h: assets/brick_model.fbx assets/materials.skm.yaml 
+build/assets/%.h: assets/brick_model.fbx assets/materials.skm.yaml $(DERIVED_IMAGES)
 	@mkdir -p $(@D) 
-	$(SKELETOOL64) --name model_tangent \
+	$(SKELETOOL64) --name $(@:build/assets/%.h=%) \
 		--fixed-point-scale 256 --model-scale 0.01 \
-		-m assets/materials.skm.yaml --default-material cube_tangent --force-material cube_tangent \
-		-o build/assets/brick_model_tangent.h assets/brick_model.fbx
+		-m assets/materials.skm.yaml --default-material $(@:build/assets/%.h=%) --force-material cube_color \
+		-o $@ assets/brick_model.fbx
+
+build/assets/%.o: assets/%.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -MM $^ -MF "$(@:.o=.d)" -MT"$@"
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+src/models/models.c: $(MESH_HEADERS)
 
 ####################
 ## Linking
@@ -123,7 +124,7 @@ $(BOOT_OBJ): $(BOOT)
 
 # without debugger
 
-CODEOBJECTS_NO_DEBUG = $(CODEOBJECTS)
+CODEOBJECTS_NO_DEBUG = $(CODEOBJECTS) $(MESH_OBJECTS)
 
 ifeq ($(WITH_DEBUGGER),1)
 CODEOBJECTS_NO_DEBUG += build/debugger/debugger_stub.o build/debugger/serial.o 
@@ -142,7 +143,7 @@ $(BASE_TARGET_NAME).z64: $(CODESEGMENT)_no_debug.o $(OBJECTS) $(CP_LD_SCRIPT)_no
 	makemask $(BASE_TARGET_NAME).z64
 
 # with debugger
-CODEOBJECTS_DEBUG = $(CODEOBJECTS) 
+CODEOBJECTS_DEBUG = $(CODEOBJECTS) $(MESH_OBJECTS)
 
 ifeq ($(WITH_DEBUGGER),1)
 CODEOBJECTS_DEBUG += build/debugger/debugger.o build/debugger/serial.o 
