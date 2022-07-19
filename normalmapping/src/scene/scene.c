@@ -140,45 +140,63 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
     gDPFillRectangle(renderState->dl++, 0, 0, SCREEN_WD-1, SCREEN_HT-1);
     gDPPipeSync(renderState->dl++);
 
-    gDPSetColorImage(renderState->dl++, G_IM_FMT_CI, G_IM_SIZ_8b, SCREEN_WD, indexColorBuffer);
-    gDPSetFillColor(renderState->dl++, gRenderModeData[scene->renderMode].clearColor);
+    gDPSetColorImage(renderState->dl++, G_IM_FMT_CI, G_IM_SIZ_8b, SCREEN_WD, lightnessBuffer);
+    gDPSetFillColor(renderState->dl++, 0x7f7f7f7f);
     gDPFillRectangle(renderState->dl++, 0, 0, SCREEN_WD-1, SCREEN_HT-1);
     gDPPipeSync(renderState->dl++);
-    gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE);
-    gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
 
+    gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WD, colorBuffer);
     cameraSetupMatrices(&scene->camera, renderState, (float)SCREEN_WD / (float)SCREEN_HT);
-    
     gSPSetLights1(renderState->dl++, gLights);
-
+    gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE);
     gSPGeometryMode(renderState->dl++, G_CULL_FRONT, G_CULL_BACK);
     gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
+    gDPSetTexturePersp(renderState->dl++, G_TP_PERSP);
 
     struct Transform transform;
     transformInitIdentity(&transform);
-
-    Mtx* lightMtx = renderStateRequestMatrices(renderState, 1);
-    transform.position = scene->pointLight.position;
-    vector3Scale(&gOneVec, &transform.scale, 0.25f);
-    transformToMatrixL(&transform, lightMtx);
-
-    gDPSetEnvColor(renderState->dl++, 255, 255, 255, 255);
-    gDPSetCombineLERP(renderState->dl++, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT);
-    gSPMatrix(renderState->dl++, lightMtx, G_MTX_MODELVIEW | G_MTX_PUSH | G_MTX_MUL);
-    gSPDisplayList(renderState->dl++, sphere_model_gfx);
+    Mtx* cubeMatrix = renderStateRequestMatrices(renderState, 1);
+    
+    transformToMatrixL(&transform, cubeMatrix);
+    gSPMatrix(renderState->dl++, cubeMatrix, G_MTX_MODELVIEW | G_MTX_PUSH | G_MTX_MUL);
+    gSPDisplayList(renderState->dl++, brick_color_mat);
+    gSPDisplayList(renderState->dl++, brick_color_gfx);
+    gDPPipeSync(renderState->dl++);
     gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
 
-    gDPPipeSync(renderState->dl++);
     gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE);
-    
-    gDPSetColorImage(renderState->dl++, G_IM_FMT_I, G_IM_SIZ_8b, SCREEN_WD, osVirtualToPhysical(lightnessBuffer));
-    gSPSegment(renderState->dl++, SOURCE_CB_SEGMENT, indexColorBuffer);
-    gSPDisplayList(renderState->dl++, gAdjustBrightnessRange);
+    gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
 
-    gDPPipeSync(renderState->dl++);
+    // gSPGeometryMode(renderState->dl++, G_CULL_FRONT, G_CULL_BACK);
+    // gDPSetRenderMode(renderState->dl++, G_RM_ZB_OPA_SURF, G_RM_ZB_OPA_SURF2);
+
+    transformInitIdentity(&transform);
+
+    // Mtx* lightMtx = renderStateRequestMatrices(renderState, 1);
+    // transform.position = scene->pointLight.position;
+    // vector3Scale(&gOneVec, &transform.scale, 0.25f);
+    // transformToMatrixL(&transform, lightMtx);
+
+    // gDPSetEnvColor(renderState->dl++, 255, 255, 255, 255);
+    // gDPSetCombineLERP(renderState->dl++, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT);
+    // gSPMatrix(renderState->dl++, lightMtx, G_MTX_MODELVIEW | G_MTX_PUSH | G_MTX_MUL);
+    // gSPDisplayList(renderState->dl++, sphere_model_gfx);
+    // gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
+
+    // gDPPipeSync(renderState->dl++);
+    // gDPSetCycleType(renderState->dl++, G_CYC_1CYCLE);
+    
+    // gDPSetColorImage(renderState->dl++, G_IM_FMT_I, G_IM_SIZ_8b, SCREEN_WD, osVirtualToPhysical(lightnessBuffer));
+    // gSPSegment(renderState->dl++, SOURCE_CB_SEGMENT, indexColorBuffer);
+    // gSPDisplayList(renderState->dl++, gAdjustBrightnessRange);
+
+    // gDPPipeSync(renderState->dl++);
     gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WD, osVirtualToPhysical(task->framebuffer));
+    gDPFillRectangle(renderState->dl++, 0, 0, SCREEN_WD-1, SCREEN_HT-1);
+    gDPPipeSync(renderState->dl++);
     gSPSegment(renderState->dl++, SOURCE_CB_SEGMENT, lightnessBuffer);
     gSPSegment(renderState->dl++, SOURCE_COLOR_SEGMENT, colorBuffer);
 
     gSPDisplayList(renderState->dl++, gCombineBuffers);
+
 }

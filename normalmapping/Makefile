@@ -105,15 +105,17 @@ build/assets/%.h: assets/brick_model.fbx assets/materials.skm.yaml $(DERIVED_IMA
 	@mkdir -p $(@D) 
 	$(SKELETOOL64) --name $(@:build/assets/%.h=%) \
 		--fixed-point-scale 256 --model-scale 0.01 \
-		-m assets/materials.skm.yaml --default-material $(@:build/assets/%.h=%) --force-material cube_color \
+		-m assets/materials.skm.yaml --default-material $(@:build/assets/%.h=%) --force-material $(@:build/assets/%.h=%) \
 		-o $@ assets/brick_model.fbx
+
+build/assets/%_geo.c: build/assets/%.h
 
 build/assets/%.o: assets/%.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MM $^ -MF "$(@:.o=.d)" -MT"$@"
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-src/models/models.c: $(MESH_HEADERS)
+build/src/models/models.o: $(MESH_HEADERS) build/assets/materials.h
 
 ####################
 ## Linking
@@ -124,7 +126,7 @@ $(BOOT_OBJ): $(BOOT)
 
 # without debugger
 
-CODEOBJECTS_NO_DEBUG = $(CODEOBJECTS) $(MESH_OBJECTS)
+CODEOBJECTS_NO_DEBUG = $(CODEOBJECTS) $(MESH_OBJECTS) build/assets/materials_mat.o
 
 ifeq ($(WITH_DEBUGGER),1)
 CODEOBJECTS_NO_DEBUG += build/debugger/debugger_stub.o build/debugger/serial.o 
@@ -143,7 +145,7 @@ $(BASE_TARGET_NAME).z64: $(CODESEGMENT)_no_debug.o $(OBJECTS) $(CP_LD_SCRIPT)_no
 	makemask $(BASE_TARGET_NAME).z64
 
 # with debugger
-CODEOBJECTS_DEBUG = $(CODEOBJECTS) $(MESH_OBJECTS)
+CODEOBJECTS_DEBUG = $(CODEOBJECTS) $(MESH_OBJECTS) build/assets/materials_mat.o
 
 ifeq ($(WITH_DEBUGGER),1)
 CODEOBJECTS_DEBUG += build/debugger/debugger.o build/debugger/serial.o 
