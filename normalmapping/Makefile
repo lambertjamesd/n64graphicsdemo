@@ -10,7 +10,7 @@ include /usr/include/n64/make/PRdefs
 
 MIDICVT:=tools/midicvt
 SFZ2N64:=tools/sfz2n64
-SKELATOOL64:=tools/skeletool64
+SKELETOOL64?=skeletool64
 
 OPTIMIZER		:= -O0
 LCDEFS			:= -DDEBUG -g -Isrc/ -I/usr/include/n64/nustd -Werror -Wall
@@ -74,17 +74,35 @@ build/%.o: %.s
 ## Assets
 ####################
 
+build/assets/brick_normal_x.png: assets/brick_normals.png
+	@mkdir -p $(@D)
+	convert assets/brick_normals.png -channel r -separate build/assets/brick_normal_x.png
+
+build/assets/brick_normal_y.png: assets/brick_normals.png
+	@mkdir -p $(@D)
+	convert assets/brick_normals.png -channel g -separate build/assets/brick_normal_y.png
+
+build/assets/brick_normal_z.png: assets/brick_normals.png
+	@mkdir -p $(@D)
+	convert assets/brick_normals.png -channel b -separate build/assets/brick_normal_z.png
+
+build/assets/materials.h: assets/materials.skm.yaml \
+	build/assets/brick_normal_x.png build/assets/brick_normal_y.png build/assets/brick_normal_z.png \
+	assets/brick_texture.png
+	@mkdir -p $(@D)
+	$(SKELETOOL64) --name materials -m assets/materials.skm.yaml --material-output -o build/assets/materials.h
+
 src/models/cylinder.h src/models/cylinder_geo.inc.h: assets/Cylinder.fbx
-	skeletool64 -s 100 -r 0,0,0 -n cylinder -o src/models/cylinder.h assets/Cylinder.fbx
+	$(SKELETOOL64) -s 100 -r 0,0,0 -n cylinder -o src/models/cylinder.h assets/Cylinder.fbx
 
 src/models/sphere.h src/models/sphere_geo.inc.h: assets/Sphere.fbx
-	skeletool64 -s 100 -r 0,0,0 -n sphere -o src/models/sphere.h assets/Sphere.fbx
+	$(SKELETOOL64) -s 100 -r 0,0,0 -n sphere -o src/models/sphere.h assets/Sphere.fbx
 
 src/models/suzanne.h src/models/suzanne_geo.inc.h: assets/Suzanne.fbx
-	skeletool64 -s 100 -r 0,0,0 -n suzanne -o src/models/suzanne.h assets/Suzanne.fbx
+	$(SKELETOOL64) -s 100 -r 0,0,0 -n suzanne -o src/models/suzanne.h assets/Suzanne.fbx
 
 src/models/ground.h src/models/ground_geo.inc.h: assets/Ground.fbx
-	skeletool64 -s 100 -r 0,0,0 -n ground -o src/models/ground.h assets/Ground.fbx
+	$(SKELETOOL64) -s 100 -r 0,0,0 -n ground -o src/models/ground.h assets/Ground.fbx
 
 ####################
 ## Linking
