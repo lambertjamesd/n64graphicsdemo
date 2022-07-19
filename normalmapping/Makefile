@@ -92,17 +92,27 @@ build/assets/materials.h: assets/materials.skm.yaml \
 	@mkdir -p $(@D)
 	$(SKELETOOL64) --name materials -m assets/materials.skm.yaml --material-output -o build/assets/materials.h
 
-src/models/cylinder.h src/models/cylinder_geo.inc.h: assets/Cylinder.fbx
-	$(SKELETOOL64) -s 100 -r 0,0,0 -n cylinder -o src/models/cylinder.h assets/Cylinder.fbx
 
-src/models/sphere.h src/models/sphere_geo.inc.h: assets/Sphere.fbx
-	$(SKELETOOL64) -s 100 -r 0,0,0 -n sphere -o src/models/sphere.h assets/Sphere.fbx
+build/assets/brick_model_color.h: assets/brick_model.fbx assets/materials.skm.yaml 
+	@mkdir -p $(@D) 
+	$(SKELETOOL64) --name model_color \
+		--fixed-point-scale 256 --model-scale 0.01 \
+		-m assets/materials.skm.yaml --default-material cube_color --force-material cube_color \
+		-o build/assets/brick_model_color.h assets/brick_model.fbx
 
-src/models/suzanne.h src/models/suzanne_geo.inc.h: assets/Suzanne.fbx
-	$(SKELETOOL64) -s 100 -r 0,0,0 -n suzanne -o src/models/suzanne.h assets/Suzanne.fbx
+build/assets/brick_model_normal.h: assets/brick_model.fbx assets/materials.skm.yaml 
+	@mkdir -p $(@D) 
+	$(SKELETOOL64) --name model_normal \
+		--fixed-point-scale 256 --model-scale 0.01 \
+		-m assets/materials.skm.yaml --default-material cube_normal --force-material cube_normal \
+		-o build/assets/brick_model_normal.h assets/brick_model.fbx
 
-src/models/ground.h src/models/ground_geo.inc.h: assets/Ground.fbx
-	$(SKELETOOL64) -s 100 -r 0,0,0 -n ground -o src/models/ground.h assets/Ground.fbx
+build/assets/brick_model_tangent.h: assets/brick_model.fbx assets/materials.skm.yaml 
+	@mkdir -p $(@D) 
+	$(SKELETOOL64) --name model_tangent \
+		--fixed-point-scale 256 --model-scale 0.01 \
+		-m assets/materials.skm.yaml --default-material cube_tangent --force-material cube_tangent \
+		-o build/assets/brick_model_tangent.h assets/brick_model.fbx
 
 ####################
 ## Linking
