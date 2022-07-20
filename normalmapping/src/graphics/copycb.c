@@ -28,8 +28,8 @@ u64 gPalleteMapping[] = {
     0xf7abf7abf7adf7af, 0xf7aff7b1f7b1f7b3, 0xf7b5f7b5f7b7f7b7, 0xf7b9f7bbf7bbf7bd,
 };
 
-u8 __attribute__((aligned(64))) indexColorBuffer[SCREEN_HT * SCREEN_WD];
-u8 __attribute__((aligned(64))) lightnessBuffer[SCREEN_HT * SCREEN_WD];
+u8 __attribute__((aligned(64))) lightnessDrawBuffer[SCREEN_HT * SCREEN_WD];
+u8 __attribute__((aligned(64))) lightnessCombineBuffer[SCREEN_HT * SCREEN_WD];
 
 u16 __attribute__((aligned(64))) colorBuffer[SCREEN_HT * SCREEN_WD];
 

@@ -74,23 +74,9 @@ build/%.o: %.s
 ## Assets
 ####################
 
-build/assets/brick_normal_x.png: assets/brick_normals.png
-	@mkdir -p $(@D)
-	convert assets/brick_normals.png -channel r -separate build/assets/brick_normal_x.png
-
-build/assets/brick_normal_y.png: assets/brick_normals.png
-	@mkdir -p $(@D)
-	convert assets/brick_normals.png -channel g -separate build/assets/brick_normal_y.png
-
-build/assets/brick_normal_z.png: assets/brick_normals.png
-	@mkdir -p $(@D)
-	convert assets/brick_normals.png -channel b -separate build/assets/brick_normal_z.png
-
-DERIVED_IMAGES = build/assets/brick_normal_x.png build/assets/brick_normal_y.png build/assets/brick_normal_z.png
-
 build/assets/materials.h: assets/materials.skm.yaml \
-	$(DERIVED_IMAGES) \
-	assets/brick_texture.png
+	assets/brick_texture.png \
+	assets/brick_depth.png
 	@mkdir -p $(@D)
 	$(SKELETOOL64) --name materials -m assets/materials.skm.yaml --material-output -o build/assets/materials.h
 
@@ -101,7 +87,7 @@ MESH_HEADERS = $(MESH_LIST:%=build/assets/%.h)
 MESH_SOURCE = $(MESH_LIST:%=build/assets/%_geo.c)
 MESH_OBJECTS = $(MESH_LIST:%=build/assets/%_geo.o)
 
-build/assets/%.h: assets/brick_model.fbx assets/materials.skm.yaml $(DERIVED_IMAGES)
+build/assets/%.h: assets/brick_model.fbx assets/materials.skm.yaml
 	@mkdir -p $(@D) 
 	$(SKELETOOL64) --name $(@:build/assets/%.h=%) \
 		--fixed-point-scale 256 --model-scale 0.01 \

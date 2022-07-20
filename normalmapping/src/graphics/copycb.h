@@ -11,8 +11,8 @@
 
 extern Gfx gCombineBuffers[];
 extern Gfx gAdjustBrightnessRange[];
-extern u8 __attribute__((aligned(64))) indexColorBuffer[];
-extern u8 __attribute__((aligned(64))) lightnessBuffer[];
+extern u8 __attribute__((aligned(64))) lightnessDrawBuffer[];
+extern u8 __attribute__((aligned(64))) lightnessCombineBuffer[];
 
 extern u16 __attribute__((aligned(64))) colorBuffer[];
 
