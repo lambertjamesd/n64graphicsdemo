@@ -74,6 +74,7 @@ struct RenderModeData gRenderModeData[] = {
     {RenderModeFlagsAttenuate, gIcePallete, 0x08080808, materialSetBasicLit, 0, 0},
     {RenderModeFlagsAttenuate, gHeat, 0x08080808, materialSetBasicLit, 0, 0},
     {RenderModeFlagsAttenuate, gRainbow, 0x08080808, materialSetBasicLit, 0, 0},
+    {RenderModeFlagsAttenuate, gGrayscale, 0x00000000, materialSetBasicLit, 0, 0},
     {0, gToonPallete, 0x00000000, materialSetToon, materialSetOutline, materialToonGround},
     {0, gYesWeCan, 0x00000000, materialYesWeCan, materialSetOutline, materialYesWeCanGround},
 };

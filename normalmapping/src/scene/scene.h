@@ -31,6 +31,7 @@ struct Scene {
     struct Camera camera;
     enum RenderMode renderMode;
     struct PointLight pointLight;
+    struct Quaternion lightRotation;
 };
 
 void sceneInit(struct Scene* scene);

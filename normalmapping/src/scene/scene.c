@@ -18,7 +18,7 @@
 
 Lights1 gLights = gdSPDefLights1(0, 0, 0, 0, 0, 0, 90, 90, 0);
 
-struct Vector3 gCameraFocus = {0.0f, SCENE_SCALE, 0.0f};
+struct Vector3 gCameraFocus = {0.0f, 0.0f, 0.0f};
 struct Vector3 gCameraStart = {SCENE_SCALE * -2.0f, SCENE_SCALE * 5.0f, SCENE_SCALE * 5.0f};
 float gCameraDistance = 0.0f;
 
@@ -50,10 +50,12 @@ void sceneInit(struct Scene* scene) {
     scene->renderMode = RenderModeRainbow;
 
     struct Coloru8 color;
-    color.r = 128;
-    color.g = 128;
-    color.b = 128;
+    color.r = 255;
+    color.g = 255;
+    color.b = 255;
     pointLightInit(&scene->pointLight, &gLightOrbitCenter, &color, 15.0f);
+
+    quatIdent(&scene->lightRotation);
 }
 
 unsigned ignoreInputFrames = 10;
@@ -83,13 +85,39 @@ void sceneUpdate(struct Scene* scene) {
         scene->renderMode = (scene->renderMode + 1) % RenderModeCount;
     }
 
-    if (!ignoreInputFrames && controllerGetButtonDown(0, L_TRIG | Z_TRIG)) {
-        if (scene->renderMode == 0) {
-            scene->renderMode = RenderModeCount - 1;
-        } else {
-            --scene->renderMode;
-        }
+    if (!ignoreInputFrames && controllerGetButton(0, D_CBUTTONS)) {
+        struct Quaternion rotateAmount;
+        quatAxisAngle(&gRight, ROTATE_PER_SECOND * gTimeDelta, &rotateAmount);
+        struct Quaternion tmp;
+        quatMultiply(&scene->lightRotation, &rotateAmount, &tmp);
+        scene->lightRotation = tmp; 
     }
+
+    if (!ignoreInputFrames && controllerGetButton(0, U_CBUTTONS)) {
+        struct Quaternion rotateAmount;
+        quatAxisAngle(&gRight, -ROTATE_PER_SECOND * gTimeDelta, &rotateAmount);
+        struct Quaternion tmp;
+        quatMultiply(&scene->lightRotation, &rotateAmount, &tmp);
+        scene->lightRotation = tmp; 
+    }
+
+    if (!ignoreInputFrames && controllerGetButton(0, R_CBUTTONS)) {
+        struct Quaternion rotateAmount;
+        quatAxisAngle(&gUp, ROTATE_PER_SECOND * gTimeDelta, &rotateAmount);
+        struct Quaternion tmp;
+        quatMultiply(&rotateAmount, &scene->lightRotation, &tmp);
+        scene->lightRotation = tmp; 
+    }
+
+    if (!ignoreInputFrames && controllerGetButton(0, L_CBUTTONS)) {
+        struct Quaternion rotateAmount;
+        quatAxisAngle(&gUp, -ROTATE_PER_SECOND * gTimeDelta, &rotateAmount);
+        struct Quaternion tmp;
+        quatMultiply(&rotateAmount, &scene->lightRotation, &tmp);
+        scene->lightRotation = tmp; 
+    }
+
+    quatMultVector(&scene->lightRotation, &gLightOrbitCenter, &scene->pointLight.position);
 
     gCameraDistance = MAX(MIN_DISTANCE, gCameraDistance);
     gCameraDistance = MIN(MAX_DISTANCE, gCameraDistance);
@@ -97,12 +125,6 @@ void sceneUpdate(struct Scene* scene) {
     struct Vector3 offset;
     quatMultVector(&scene->camera.transform.rotation, &gForward, &offset);
     vector3AddScaled(&gCameraFocus, &offset, gCameraDistance, &scene->camera.transform.position);
-
-    float angle = gTimePassed * 2.0f * M_PI / LIGHT_ORBIT_PERIOD;
-
-    scene->pointLight.position.x = cosf(angle) * LIGHT_ORBIT_RADIUS + gLightOrbitCenter.x;
-    scene->pointLight.position.y = cosf(angle * 3.0f) * SCENE_SCALE + gLightOrbitCenter.y;
-    scene->pointLight.position.z = sinf(angle) * LIGHT_ORBIT_RADIUS + gLightOrbitCenter.z;
 
     if (ignoreInputFrames) {
         --ignoreInputFrames;
@@ -212,6 +234,8 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
         if (i == 0) {
             gDPSetRenderMode(renderState->dl++, RB_ZB_ADD_DECAL(1), RB_ZB_ADD_DECAL(2));
         }
+
+        break;
     }
     
     gSPPopMatrix(renderState->dl++, G_MTX_MODELVIEW);
@@ -228,7 +252,7 @@ void sceneRender(struct Scene* scene, struct RenderState* renderState, struct Gr
     gDPSetColorImage(renderState->dl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, SCREEN_WD, osVirtualToPhysical(task->framebuffer));
     gDPFillRectangle(renderState->dl++, 0, 0, SCREEN_WD-1, SCREEN_HT-1);
     gDPPipeSync(renderState->dl++);
-    gSPSegment(renderState->dl++, SOURCE_CB_SEGMENT, lightnessCombineBuffer);
+    gSPSegment(renderState->dl++, SOURCE_CB_SEGMENT, lightnessDrawBuffer);
     gSPSegment(renderState->dl++, SOURCE_COLOR_SEGMENT, colorBuffer);
 
     gSPDisplayList(renderState->dl++, gCombineBuffers);

@@ -104,7 +104,7 @@ u16 __attribute__((aligned(64))) colorBuffer[SCREEN_HT * SCREEN_WD];
 
 #define COMBINE_FULL_IMAGE_ROW(y, w, h)    COMBINE_HALF_IMAGE_ROW(0, y, w, h)
 
-#define LOAD_TEXTURE_COLOR       1, 0, TEXEL1, TEXEL1, 0, 0, 0, ENVIRONMENT
+#define LOAD_TEXTURE_COLOR       1, 0, TEXEL1, 0, 0, 0, 0, ENVIRONMENT
 #define MULTIPLY_OTHER_TEXTURE   TEXEL1, 0, COMBINED, 0, 0, 0, 0, ENVIRONMENT
 
 Gfx gCombineBuffers[] = {
