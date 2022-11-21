@@ -1,6 +1,6 @@
 #include "base.h"
 
-Gfx gThirdRecursiveLayer[] = {
+Gfx gTenTimes[] = {
     gsSPDisplayList(TEST_TASK_SEGMENT << 24),
     gsSPDisplayList(TEST_TASK_SEGMENT << 24),
     gsSPDisplayList(TEST_TASK_SEGMENT << 24),
@@ -14,31 +14,60 @@ Gfx gThirdRecursiveLayer[] = {
     gsSPEndDisplayList(),
 };
 
-Gfx gSecondRecursiveLayer[] = {
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
-    gsSPDisplayList(&gThirdRecursiveLayer[0]),
+Gfx gHundredTimes[] = {
+    gsSPDisplayList(&gTenTimes[0]),
+    gsSPDisplayList(&gTenTimes[0]),
+    gsSPDisplayList(&gTenTimes[0]),
+    gsSPDisplayList(&gTenTimes[0]),
+    gsSPDisplayList(&gTenTimes[0]),
+    gsSPDisplayList(&gTenTimes[0]),
+    gsSPDisplayList(&gTenTimes[0]),
+    gsSPDisplayList(&gTenTimes[0]),
+    gsSPDisplayList(&gTenTimes[0]),
+    gsSPDisplayList(&gTenTimes[0]),
     gsSPEndDisplayList(),
 };
 
-Gfx gRecursiveTest[] = {
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
-    gsSPDisplayList(&gSecondRecursiveLayer[0]),
+Gfx gThousandTimes[] = {
+    gsSPDisplayList(&gHundredTimes[0]),
+    gsSPDisplayList(&gHundredTimes[0]),
+    gsSPDisplayList(&gHundredTimes[0]),
+    gsSPDisplayList(&gHundredTimes[0]),
+    gsSPDisplayList(&gHundredTimes[0]),
+    gsSPDisplayList(&gHundredTimes[0]),
+    gsSPDisplayList(&gHundredTimes[0]),
+    gsSPDisplayList(&gHundredTimes[0]),
+    gsSPDisplayList(&gHundredTimes[0]),
+    gsSPDisplayList(&gHundredTimes[0]),
     gsSPEndDisplayList(),
 };
 
+
+
+Gfx gTenThousandTimes[] = {
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPDisplayList(&gThousandTimes[0]),
+    gsSPEndDisplayList(),
+};
+
+Gfx gHundredThousandTimes[] = {
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPDisplayList(&gTenThousandTimes[0]),
+    gsSPEndDisplayList(),
+};

@@ -48,8 +48,9 @@ OSMesgQueue      gfxFrameMsgQ;
 static OSMesg           gfxFrameMsgBuf[MAX_FRAME_BUFFER_MESGS];
 
 OSMesgQueue     rdpMessageQ;
-
 OSMesg          rdpMessageBuf;
+OSMesgQueue n_retraceMessageQ;
+OSMesg retraceMessageBuf;
 
 OSPiHandle	*gPiHandle;
 
@@ -124,19 +125,32 @@ void println(char* text)
 void displayConsoleLog() {
     int line;
 
+    u16* fb = cfb_tbl[frame];
+
     for (line = 0; line < NUM_LINES; ++line)
     {
-      printstr(white, 5, 2 + NUM_LINES - line, textGrid[(line + nextLineIndex) % NUM_LINES]);
+      printstr(fb, white, 5, 2 + NUM_LINES - line, textGrid[(line + nextLineIndex) % NUM_LINES]);
     }
 
     osWritebackDCacheAll();
-    osViSwapBuffer( cfb_tbl[frame] );
+    osViSwapBuffer( fb );
     frame ^= 1;
+}
+
+void start_display(void)
+{
+  int i;
+  for (i = 0; i < SCREEN_WD * SCREEN_HT; i ++){
+    cfb_16_a[i] = GPACK_RGBA5551(0,0,0,1);
+    cfb_16_b[i] = GPACK_RGBA5551(0,0,0,1);
+  } 
 }
 
 extern OSMesgQueue dmaMessageQ;
 
 extern char _heapStart[];
+
+double accumulatedTime[256];
 
 Gfx glist[256];
 
@@ -185,14 +199,18 @@ static void gameProc(void* arg) {
 			break;
 	}
 
+    osCreateViManager(OS_PRIORITY_VIMGR);
+
+    osCreateMesgQueue(&n_retraceMessageQ, &retraceMessageBuf, 1);
+    osViSetEvent(&n_retraceMessageQ, NULL, 1);			/* retrace */
+    
     osViSetMode(&osViModeTable[schedulerMode]);
-
-
 	osViBlack(1);
-	osViSetSpecialFeatures(OS_VI_GAMMA_OFF |
-			OS_VI_GAMMA_DITHER_OFF |
-			OS_VI_DIVOT_OFF |
-			OS_VI_DITHER_FILTER_OFF);
+    osViSwapBuffer( cfb_tbl[frame] );
+    start_display();
+    
+    osViBlack(0);
+    osRecvMesg(&n_retraceMessageQ, NULL, OS_MESG_BLOCK);
 
     osCreateMesgQueue(&gfxFrameMsgQ, gfxFrameMsgBuf, MAX_FRAME_BUFFER_MESGS);
 
@@ -211,7 +229,18 @@ static void gameProc(void* arg) {
 
     char printedMessage[64];
 
-    while (1) {
+    int numberOfSamples = 10;
+    int currentSample = numberOfSamples;
+
+    for (int i = 0; i < gTaskCount; ++i) {
+        accumulatedTime[gTaskCount] = 0.0;
+    }
+
+    u16 perspNorm;
+    guPerspective(&gPerspMatrix, &perspNorm, 45.0f, 1.0f, 1.0f, 10.0f, 100.0f);
+    guPosition(&gLoadMatrix, 2.3, 5.6, 30.7, 0.5, 1.0, 2.0, 3.0);
+
+    while (currentTask < gTaskCount) {
         Gfx* dl = glist;
 
         gSPSegment(dl++, 0, 0);
@@ -219,7 +248,7 @@ static void gameProc(void* arg) {
         if (gTasks[currentTask].setupTask) {
             gSPDisplayList(dl++, gTasks[currentTask].setupTask);
         }
-        gSPDisplayList(dl++, gRecursiveTest);
+        gSPDisplayList(dl++, gTasks[currentTask].testRunner);
 
         gDPFullSync(dl++);
         gSPEndDisplayList(dl++);
@@ -243,12 +272,33 @@ static void gameProc(void* arg) {
         (void)osRecvMesg(&rdpMessageQ, NULL, OS_MESG_BLOCK);
         u64 totalTime = osGetTime() - timeBefore;
 
-        sprintf(printedMessage, "%s time = %d", gTasks[currentTask].name, (int)totalTime);
+        double nanoSeconds = OS_CYCLES_TO_USEC(totalTime);
+
+        accumulatedTime[currentTask] += nanoSeconds;
+
+        sprintf(printedMessage, "time = %d %s", (int)totalTime, gTasks[currentTask].name);
 
         println(printedMessage);
 
         displayConsoleLog();
+        osRecvMesg(&n_retraceMessageQ, NULL, OS_MESG_BLOCK);
 
-        currentTask = (currentTask + 1) % gTaskCount;
+        currentTask = currentTask + 1;
+
+        if (currentTask == gTaskCount && currentSample > 0) {
+            --currentSample;
+            currentTask = 0;
+        }
+    }
+
+    for (int i = 0; i < gTaskCount; ++i) {
+
+        int totalTime = (int)(accumulatedTime[i] / (double)numberOfSamples);
+
+        sprintf(printedMessage, "total time = %d %s", (int)totalTime, gTasks[i].name);
+
+        println(printedMessage);
+        
+        displayConsoleLog();
     }
 }

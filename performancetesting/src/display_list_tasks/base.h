@@ -5,6 +5,10 @@
 
 #define TEST_TASK_SEGMENT   0x1
 
-extern Gfx gRecursiveTest[];
+extern Gfx gTenTimes[];
+extern Gfx gHundredTimes[];
+extern Gfx gThousandTimes[];
+extern Gfx gTenThousandTimes[];
+extern Gfx gHundredThousandTimes[];
 
 #endif

@@ -36,18 +36,18 @@
 
 
 extern	void	putchr(u16* fb, u16, int, int, char);
-extern	void	revchar(u16, int, int, char);
-extern	void	putint_h(u16, int, int, int, char);
-extern	void	putint_d(u16, int, int, int);
-extern	void	printstr(u16, int, int, char*);
-extern	void	circle(int, int, int, u16);
-extern	void	pset(int, int, u16);
-extern	void	line(int, int, int, int, u16);
-extern	void	box(int, int, int, int, u16);
-extern	void	gcls(void);
-extern	void	bigputc(u16, int, int, char, int, int);
-extern	void	printbig(u16, int, int, char*, int, int);
-extern	void	WriteBG(u8 *, u16 *);
+extern	void	revchar(u16* fb, u16, int, int, char);
+extern	void	putint_h(u16* fb, u16, int, int, int, char);
+extern	void	putint_d(u16* fb, u16, int, int, int);
+extern	void	printstr(u16* fb, u16, int, int, char*);
+extern	void	circle(u16* fb, int, int, int, u16);
+extern	void	pset(u16* fb, int, int, u16);
+extern	void	line(u16* fb, int, int, int, int, u16);
+extern	void	box(u16* fb, int, int, int, int, u16);
+extern	void	gcls(u16* fb);
+extern	void	bigputc(u16* fb, u16, int, int, char, int, int);
+extern	void	printbig(u16* fb, u16, int, int, char*, int, int);
+extern	void	WriteBG(u16* fb, u8 *, u16 *);
 extern	void	SetBG(u8 *, u16 *);
 extern	void	gputchar(u16, int, int, char, u16 *);
 extern	void	gprintstr(u16, int, int, char*, u16 *);
