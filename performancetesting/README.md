@@ -23,6 +23,7 @@ Below is an incomplete table of the perofmrance for commands part of the F3DEX2 
 | **gsDPLoadBlock | 0.00772 * n_bytes |
 
 \* This is the mimimum time of the operation. A previous unfinished command could cause this command to stall for longer
+
 \** How long this operation takes depends on how many bytes are copied
 
 This is, for now, an incomplete list of RCP commands. Most notably missing is `gsSPVertex` and `gsSP1Triangle`. The speed of these two commands will depend on how the RCP is configured, the screen size of triangles, and if the triangles are fully or partially clipped. Because measuring this will require more complicated test code it is left off for now.
