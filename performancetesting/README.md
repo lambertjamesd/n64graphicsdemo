@@ -28,4 +28,21 @@ Keep in mind these test were running with an idle CPU. If the CPU and RCP are bo
 
 \** How long this operation takes depends on how many bytes are copied
 
+## gsDPLoadBlock examples
+
+These values are based on raw data collected which was used to determine the microseconds per bytes above
+
+| G_IM_FMT | G_IM_SIZ | size | total bytes | Microsecends |
+|----------|----------|------|-------------|--------------|
+| G_IM_FMT_RGBA | G_IM_SIZ_16b | 32x64 | 4096 | 31.606 |
+| G_IM_FMT_RGBA | G_IM_SIZ_16b | 32x32 | 2048 | 15.028 |
+| G_IM_FMT_RGBA | G_IM_SIZ_16b | 16x32 | 1024 | 6.767 |
+| G_IM_FMT_RGBA | G_IM_SIZ_16b | 32x16 | 1024 | 6.767 |
+| G_IM_FMT_RGBA | G_IM_SIZ_16b | 8x32 | 512 | 2.634 |
+| G_IM_FMT_RGBA | G_IM_SIZ_16b | 32x8 | 512 | 2.634 |
+| G_IM_FMT_I | G_IM_SIZ_4b | 64x128 | 4096 | 15.031 |
+| G_IM_FMT_I | G_IM_SIZ_4b | 32x64 | 2048 | 6.805 |
+
+## TODO
+
 This is, for now, an incomplete list of RCP commands. Most notably missing is `gsSPVertex` and `gsSP1Triangle`. The speed of these two commands will depend on how the RCP is configured, the screen size of triangles, and if the triangles are fully or partially clipped. Because measuring this will require more complicated test code it is left off for now.
