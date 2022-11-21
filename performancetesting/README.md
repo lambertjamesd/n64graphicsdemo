@@ -2,6 +2,8 @@
 
 Below is an incomplete table of the perofmrance for commands part of the F3DEX2 microcode
 
+Keep in mind these test were running with an idle CPU. If the CPU and RCP are both accessing RAM these times will be slower.
+
 | Command | Microseconds (1/1000 milliseconds) |
 |---------|---------------------|
 | gsSPNoOp | 0.225 |
