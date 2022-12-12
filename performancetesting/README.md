@@ -41,7 +41,7 @@ These values are based on raw data collected which was used to determine the mic
 | G_IM_FMT_RGBA | G_IM_SIZ_16b | 8x32 | 512 | 2.634 |
 | G_IM_FMT_RGBA | G_IM_SIZ_16b | 32x8 | 512 | 2.634 |
 | G_IM_FMT_I | G_IM_SIZ_4b | 64x128 | 4096 | 15.031 |
-| G_IM_FMT_I | G_IM_SIZ_4b | 32x64 | 2048 | 6.805 |
+| G_IM_FMT_I | G_IM_SIZ_4b | 32x64 | 1024 | 6.805 |
 
 ## TODO
 
